@@ -321,6 +321,15 @@ fn registerReflectionData(world: *flecs.c.ecs_world_t, comptime T: type, entity:
                             break :blk flecs.c.ecs_enum_init(world, &enum_desc);
                         },
 
+                        .Array => blk: {
+                            var array_desc = std.mem.zeroes(flecs.c.ecs_array_desc_t);
+                            array_desc.type = flecs.c.FLECS__Eecs_f32_t;
+                            array_desc.entity.entity = meta.componentHandle(T).*;
+                            array_desc.count = @typeInfo(field.field_type).Array.len;
+
+                            break :blk flecs.c.ecs_array_init(world, &array_desc);
+                        },
+
                         else => {
                             std.debug.print("unhandled field type: {any}, ti: {any}\n", .{ field.field_type, @typeInfo(field.field_type) });
                             unreachable;
