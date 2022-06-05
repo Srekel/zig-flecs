@@ -8,6 +8,10 @@ const FlecsOrderByAction = fn (flecs.c.ecs_entity_t, ?*const anyopaque, flecs.c.
 
 fn dummyFn(_: [*c]flecs.c.ecs_iter_t) callconv(.C) void {}
 
+const SystemParameters = struct {
+    ctx: ?*anyopaque,
+};
+
 pub const World = struct {
     world: *flecs.c.ecs_world_t,
 
@@ -165,7 +169,7 @@ pub const World = struct {
         _ = flecs.c.ecs_system_init(self.world, &desc);
     }
 
-    pub fn newWrappedRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, comptime Components: type, comptime action: fn (*flecs.Iterator(Components)) void) void {
+    pub fn newWrappedRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, comptime Components: type, comptime action: fn (*flecs.Iterator(Components)) void, params: SystemParameters) flecs.EntityId {
         var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
         desc.entity.name = name;
         desc.entity.add[0] = @enumToInt(phase);
@@ -173,7 +177,8 @@ pub const World = struct {
         // desc.multi_threaded = true;
         desc.callback = dummyFn;
         desc.run = wrapSystemFn(Components, action);
-        _ = flecs.c.ecs_system_init(self.world, &desc);
+        desc.ctx = params.ctx;
+        return flecs.c.ecs_system_init(self.world, &desc);
     }
 
     /// creates a Filter using the passed in struct
@@ -244,13 +249,14 @@ pub const World = struct {
     }
 
     /// adds an observer system to the World using the passed in struct (see systems)
-    pub fn observer(self: World, comptime Components: type, event: flecs.Event) void {
+    pub fn observer(self: World, comptime Components: type, event: flecs.Event, ctx: ?*anyopaque) void {
         std.debug.assert(@typeInfo(Components) == .Struct);
         std.debug.assert(@hasDecl(Components, "run"));
         std.debug.assert(@hasDecl(Components, "name"));
 
         var desc = std.mem.zeroes(flecs.c.ecs_observer_desc_t);
         desc.callback = dummyFn;
+        desc.ctx = ctx;
         desc.entity.name = Components.name;
         desc.events[0] = @enumToInt(event);
 
