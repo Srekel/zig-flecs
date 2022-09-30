@@ -16,10 +16,10 @@ pub fn Writeonly(comptime T: type) type {
     };
 }
 
-pub fn WriteonlyI(comptime T: type, field: []const u8) type {
+pub fn WriteonlyI(comptime T: type, field_param: []const u8) type {
     return struct {
         pub const inout: flecs.InOutKind = .out;
-        pub const field = field;
+        pub const field = field_param;
         term_type: T,
     };
 }
@@ -73,17 +73,17 @@ pub fn DontMatch(comptime T: type) type {
     };
 }
 
-pub fn Mask(comptime T: type, mask: u8) type {
+pub fn Mask(comptime T: type, mask_param: u8) type {
     return struct {
-        pub const mask: u8 = mask;
+        pub const mask: u8 = mask_param;
         term_type: T,
     };
 }
 
-pub fn MaskI(comptime T: type, mask: u8, field: []const u8) type {
+pub fn MaskI(comptime T: type, mask_param: u8, field_param: []const u8) type {
     return struct {
-        pub const field = field;
-        pub const mask: u8 = mask;
+        pub const field = field_param;
+        pub const mask: u8 = mask_param;
         term_type: T,
     };
 }
@@ -95,9 +95,9 @@ pub fn Pair(comptime RelationT: type, comptime ObjectT: type) type {
     };
 }
 
-pub fn PairI(comptime RelationT: type, comptime ObjectT: type, field: []const u8) type {
+pub fn PairI(comptime RelationT: type, comptime ObjectT: type, field_param: []const u8) type {
     return struct {
-        pub const field = field;
+        pub const field = field_param;
         relation_type: RelationT,
         obj_type: ObjectT,
     };

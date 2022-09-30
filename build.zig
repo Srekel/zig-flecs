@@ -68,7 +68,7 @@ fn getAllExamples(b: *std.build.Builder, root_directory: []const u8) [][2][]cons
                         const abs_path = std.fs.path.join(alloc, &[_][]const u8{ directory, entry.name }) catch unreachable;
                         const name = std.fs.path.basename(abs_path);
 
-                        filelist.append([2][]const u8 {name[0..name.len - 4], abs_path}) catch unreachable;
+                        filelist.append([2][]const u8{ name[0 .. name.len - 4], abs_path }) catch unreachable;
                     }
                 } else if (entry.kind == .Directory) {
                     const abs_path = std.fs.path.join(alloc, &[_][]const u8{ directory, entry.name }) catch unreachable;
@@ -108,7 +108,7 @@ pub fn linkArtifact(b: *Builder, artifact: *std.build.LibExeObjStep, target: std
 
 fn compileFlecs(b: *Builder, exe: *std.build.LibExeObjStep, target: std.zig.CrossTarget, comptime prefix_path: []const u8) void {
     exe.linkLibC();
-    exe.addIncludeDir(prefix_path ++ "src/c");
+    exe.addIncludePath(prefix_path ++ "src/c");
 
     var buildFlags = std.ArrayList([]const u8).init(b.allocator);
     if (target.isWindows()) {

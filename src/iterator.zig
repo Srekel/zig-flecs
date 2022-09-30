@@ -18,9 +18,9 @@ pub fn Iterator(comptime Components: type) type {
         iter: *flecs.c.ecs_iter_t,
         inner_iter: ?TableColumns = null,
         index: usize = 0,
-        nextFn: fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool,
+        nextFn: *const fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool,
 
-        pub fn init(iter: *flecs.c.ecs_iter_t, nextFn: fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool) @This() {
+        pub fn init(iter: *flecs.c.ecs_iter_t, comptime nextFn: fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool) @This() {
             meta.validateIterator(Components, iter);
             return .{
                 .iter = iter,

@@ -169,7 +169,7 @@ pub const World = struct {
         _ = flecs.c.ecs_system_init(self.world, &desc);
     }
 
-    pub fn newWrappedRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, comptime Components: type, comptime action: fn (*flecs.Iterator(Components)) void, params: SystemParameters) flecs.EntityId {
+    pub fn newWrappedRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, comptime Components: type,  action: fn (*flecs.Iterator(Components)) void, params: SystemParameters) flecs.EntityId {
         var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
         desc.entity.name = name;
         desc.entity.add[0] = @enumToInt(phase);
@@ -340,9 +340,9 @@ pub const World = struct {
     }
 };
 
-fn wrapSystemFn(comptime T: type, comptime cb: fn (*flecs.Iterator(T)) void) fn ([*c]flecs.c.ecs_iter_t) callconv(.C) void {
+fn wrapSystemFn(comptime T: type, comptime cb: fn (*flecs.Iterator(T)) void) *const fn ([*c]flecs.c.ecs_iter_t) callconv(.C) void {
     const Closure = struct {
-        pub var callback: fn (*flecs.Iterator(T)) void = cb;
+        pub const callback: fn (*flecs.Iterator(T)) void = cb;
 
         pub fn closure(it: [*c]flecs.c.ecs_iter_t) callconv(.C) void {
             callback(&flecs.Iterator(T).init(it, flecs.c.ecs_iter_next));

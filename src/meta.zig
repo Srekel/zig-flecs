@@ -57,7 +57,9 @@ pub fn FinalChild(comptime T: type) type {
             .One => switch (@typeInfo(info.child)) {
                 .Struct => return info.child,
                 .Optional => |opt_info| return opt_info.child,
-                else => {},
+                else => {
+                    @compileError("Expected pointer or optional pointer, found '" ++ @typeInfo(info.child) ++ "'");
+                },
             },
             else => {},
         },
@@ -123,7 +125,7 @@ pub fn argCount(comptime function: anytype) usize {
 /// constness and optionality are retained.
 pub fn TableIteratorData(comptime Components: type) type {
     const src_fields = std.meta.fields(Components);
-    const StructField = std.builtin.TypeInfo.StructField;
+    const StructField = std.builtin.Type.StructField;
     var fields: [src_fields.len]StructField = undefined;
 
     for (src_fields) |field, i| {
@@ -140,7 +142,7 @@ pub fn TableIteratorData(comptime Components: type) type {
     return @Type(.{ .Struct = .{
         .layout = .Auto,
         .fields = &fields,
-        .decls = &[_]std.builtin.TypeInfo.Declaration{},
+        .decls = &[_]std.builtin.Type.Declaration{},
         .is_tuple = false,
     } });
 }
@@ -168,7 +170,7 @@ pub fn FieldsTupleType(comptime T: type) type {
         .Struct = .{
             .layout = ti.layout,
             .fields = ti.fields,
-            .decls = &[0]std.builtin.TypeInfo.Declaration{},
+            .decls = &[0]std.builtin.Type.Declaration{},
             .is_tuple = true,
         },
     });
@@ -366,7 +368,7 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
     if (@hasDecl(Components, "modifiers")) {
         inline for (Components.modifiers) |inout_tuple| {
             const ti = TermInfo.init(inout_tuple);
-            // std.debug.print("{any}: {any}\n", .{ inout_tuple, ti });
+            std.debug.print("{any}: {any}\n", .{ inout_tuple, ti });
 
             if (getTermIndex(ti.term_type, ti.field, &desc, component_info.fields)) |term_index| {
                 // Not terms should not be present in the Components struct
@@ -452,7 +454,7 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
 }
 
 /// gets the index into the terms array of this type or null if it isnt found (likely a new filter term)
-pub fn getTermIndex(comptime T: type, field_name: ?[]const u8, filter: *flecs.c.ecs_filter_desc_t, fields: []const std.builtin.TypeInfo.StructField) ?usize {
+pub fn getTermIndex(comptime T: type, field_name: ?[]const u8, filter: *flecs.c.ecs_filter_desc_t, fields: []const std.builtin.Type.StructField) ?usize {
     if (fields.len == 0) return null;
     const comp_id = meta.componentHandle(T).*;
 

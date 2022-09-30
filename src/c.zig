@@ -600,7 +600,7 @@ pub const struct_ecs_vector_t = opaque {};
 
 pub const ecs_vector_t = struct_ecs_vector_t;
 
-pub const ecs_comparator_t = ?fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
+pub const ecs_comparator_t = ?*const fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
 
 pub extern fn _ecs_vector_new(elem_size: ecs_size_t, offset: i16, elem_count: i32) ?*ecs_vector_t;
 
@@ -906,7 +906,7 @@ pub extern fn _wsearchenv_s(_Filename: [*c]const wchar_t, _EnvVar: [*c]const wch
 
 pub extern fn _wsplitpath_s(_FullPath: [*c]const wchar_t, _Drive: [*c]wchar_t, _DriveSizeInWords: usize, _Dir: [*c]wchar_t, _DirSizeInWords: usize, _Filename: [*c]wchar_t, _FilenameSizeInWords: usize, _Ext: [*c]wchar_t, _ExtSizeInWords: usize) errno_t;
 
-pub const _onexit_t = ?fn () callconv(.C) c_int;
+pub const _onexit_t = ?*const fn () callconv(.C) c_int;
 
 pub const struct__div_t = extern struct {
     quot: c_int,
@@ -948,13 +948,13 @@ pub extern var __imp___mb_cur_max: [*c]c_int;
 
 pub extern fn ___mb_cur_max_func() c_int;
 
-pub const _purecall_handler = ?fn () callconv(.C) void;
+pub const _purecall_handler = ?*const fn () callconv(.C) void;
 
 pub extern fn _set_purecall_handler(_Handler: _purecall_handler) _purecall_handler;
 
 pub extern fn _get_purecall_handler() _purecall_handler;
 
-pub const _invalid_parameter_handler = ?fn ([*c]const wchar_t, [*c]const wchar_t, [*c]const wchar_t, c_uint, usize) callconv(.C) void;
+pub const _invalid_parameter_handler = ?*const fn ([*c]const wchar_t, [*c]const wchar_t, [*c]const wchar_t, c_uint, usize) callconv(.C) void;
 
 pub extern fn _set_invalid_parameter_handler(_Handler: _invalid_parameter_handler) _invalid_parameter_handler;
 
@@ -1038,7 +1038,7 @@ pub extern fn labs(_X: c_long) c_long; // C:\Users\coltonfranklin\dev\lang\zig-w
 
 pub extern fn _abs64(arg_x: c_longlong) c_longlong;
 
-pub extern fn atexit(?fn () callconv(.C) void) c_int;
+pub extern fn atexit(?*const fn () callconv(.C) void) c_int;
 
 pub extern fn atof(_String: [*c]const u8) f64;
 
@@ -1052,9 +1052,9 @@ pub extern fn atol(_Str: [*c]const u8) c_long;
 
 pub extern fn _atol_l(_Str: [*c]const u8, _Locale: _locale_t) c_long;
 
-pub extern fn bsearch(_Key: ?*const anyopaque, _Base: ?*const anyopaque, _NumOfElements: usize, _SizeOfElements: usize, _PtFuncCompare: ?fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int) ?*anyopaque;
+pub extern fn bsearch(_Key: ?*const anyopaque, _Base: ?*const anyopaque, _NumOfElements: usize, _SizeOfElements: usize, _PtFuncCompare: ?*const fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int) ?*anyopaque;
 
-pub extern fn qsort(_Base: ?*anyopaque, _NumOfElements: usize, _SizeOfElements: usize, _PtFuncCompare: ?fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int) void;
+pub extern fn qsort(_Base: ?*anyopaque, _NumOfElements: usize, _SizeOfElements: usize, _PtFuncCompare: ?*const fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int) void;
 
 pub extern fn _byteswap_ushort(_Short: c_ushort) c_ushort;
 
@@ -1388,7 +1388,7 @@ pub fn ulltow(arg__n: c_ulonglong, arg__w: [*c]wchar_t, arg__i: c_int) callconv(
     return _ui64tow(_n, _w, _i);
 }
 
-pub extern fn bsearch_s(_Key: ?*const anyopaque, _Base: ?*const anyopaque, _NumOfElements: rsize_t, _SizeOfElements: rsize_t, _PtFuncCompare: ?fn (?*anyopaque, ?*const anyopaque, ?*const anyopaque) callconv(.C) c_int, _Context: ?*anyopaque) ?*anyopaque;
+pub extern fn bsearch_s(_Key: ?*const anyopaque, _Base: ?*const anyopaque, _NumOfElements: rsize_t, _SizeOfElements: rsize_t, _PtFuncCompare: ?*const fn (?*anyopaque, ?*const anyopaque, ?*const anyopaque) callconv(.C) c_int, _Context: ?*anyopaque) ?*anyopaque;
 
 pub extern fn _dupenv_s(_PBuffer: [*c][*c]u8, _PBufferSizeInBytes: [*c]usize, _VarName: [*c]const u8) errno_t;
 
@@ -1430,7 +1430,7 @@ pub extern fn _searchenv_s(_Filename: [*c]const u8, _EnvVar: [*c]const u8, _Resu
 
 pub extern fn _splitpath_s(_FullPath: [*c]const u8, _Drive: [*c]u8, _DriveSize: usize, _Dir: [*c]u8, _DirSize: usize, _Filename: [*c]u8, _FilenameSize: usize, _Ext: [*c]u8, _ExtSize: usize) errno_t;
 
-pub extern fn qsort_s(_Base: ?*anyopaque, _NumOfElements: usize, _SizeOfElements: usize, _PtFuncCompare: ?fn (?*anyopaque, ?*const anyopaque, ?*const anyopaque) callconv(.C) c_int, _Context: ?*anyopaque) void;
+pub extern fn qsort_s(_Base: ?*anyopaque, _NumOfElements: usize, _SizeOfElements: usize, _PtFuncCompare: ?*const fn (?*anyopaque, ?*const anyopaque, ?*const anyopaque) callconv(.C) c_int, _Context: ?*anyopaque) void;
 
 pub inline fn _mm_malloc(arg___size: usize, arg___align: usize) ?*anyopaque {
     var __size = arg___size;
@@ -1544,67 +1544,67 @@ pub const ecs_os_dl_t = usize;
 
 pub const ecs_os_sock_t = usize;
 
-pub const ecs_os_proc_t = ?fn () callconv(.C) void;
+pub const ecs_os_proc_t = ?*const fn () callconv(.C) void;
 
-pub const ecs_os_api_init_t = ?fn () callconv(.C) void;
+pub const ecs_os_api_init_t = ?*const fn () callconv(.C) void;
 
-pub const ecs_os_api_fini_t = ?fn () callconv(.C) void;
+pub const ecs_os_api_fini_t = ?*const fn () callconv(.C) void;
 
-pub const ecs_os_api_malloc_t = ?fn (ecs_size_t) callconv(.C) ?*anyopaque;
+pub const ecs_os_api_malloc_t = ?*const fn (ecs_size_t) callconv(.C) ?*anyopaque;
 
-pub const ecs_os_api_free_t = ?fn (?*anyopaque) callconv(.C) void;
+pub const ecs_os_api_free_t = ?*const fn (?*anyopaque) callconv(.C) void;
 
-pub const ecs_os_api_realloc_t = ?fn (?*anyopaque, ecs_size_t) callconv(.C) ?*anyopaque;
+pub const ecs_os_api_realloc_t = ?*const fn (?*anyopaque, ecs_size_t) callconv(.C) ?*anyopaque;
 
-pub const ecs_os_api_calloc_t = ?fn (ecs_size_t) callconv(.C) ?*anyopaque;
+pub const ecs_os_api_calloc_t = ?*const fn (ecs_size_t) callconv(.C) ?*anyopaque;
 
-pub const ecs_os_api_strdup_t = ?fn ([*c]const u8) callconv(.C) [*c]u8;
+pub const ecs_os_api_strdup_t = ?*const fn ([*c]const u8) callconv(.C) [*c]u8;
 
-pub const ecs_os_thread_callback_t = ?fn (?*anyopaque) callconv(.C) ?*anyopaque;
+pub const ecs_os_thread_callback_t = ?*const fn (?*anyopaque) callconv(.C) ?*anyopaque;
 
-pub const ecs_os_api_thread_new_t = ?fn (ecs_os_thread_callback_t, ?*anyopaque) callconv(.C) ecs_os_thread_t;
+pub const ecs_os_api_thread_new_t = ?*const fn (ecs_os_thread_callback_t, ?*anyopaque) callconv(.C) ecs_os_thread_t;
 
-pub const ecs_os_api_thread_join_t = ?fn (ecs_os_thread_t) callconv(.C) ?*anyopaque;
+pub const ecs_os_api_thread_join_t = ?*const fn (ecs_os_thread_t) callconv(.C) ?*anyopaque;
 
-pub const ecs_os_api_ainc_t = ?fn ([*c]i32) callconv(.C) c_int;
+pub const ecs_os_api_ainc_t = ?*const fn ([*c]i32) callconv(.C) c_int;
 
-pub const ecs_os_api_mutex_new_t = ?fn () callconv(.C) ecs_os_mutex_t;
+pub const ecs_os_api_mutex_new_t = ?*const fn () callconv(.C) ecs_os_mutex_t;
 
-pub const ecs_os_api_mutex_lock_t = ?fn (ecs_os_mutex_t) callconv(.C) void;
+pub const ecs_os_api_mutex_lock_t = ?*const fn (ecs_os_mutex_t) callconv(.C) void;
 
-pub const ecs_os_api_mutex_unlock_t = ?fn (ecs_os_mutex_t) callconv(.C) void;
+pub const ecs_os_api_mutex_unlock_t = ?*const fn (ecs_os_mutex_t) callconv(.C) void;
 
-pub const ecs_os_api_mutex_free_t = ?fn (ecs_os_mutex_t) callconv(.C) void;
+pub const ecs_os_api_mutex_free_t = ?*const fn (ecs_os_mutex_t) callconv(.C) void;
 
-pub const ecs_os_api_cond_new_t = ?fn () callconv(.C) ecs_os_cond_t;
+pub const ecs_os_api_cond_new_t = ?*const fn () callconv(.C) ecs_os_cond_t;
 
-pub const ecs_os_api_cond_free_t = ?fn (ecs_os_cond_t) callconv(.C) void;
+pub const ecs_os_api_cond_free_t = ?*const fn (ecs_os_cond_t) callconv(.C) void;
 
-pub const ecs_os_api_cond_signal_t = ?fn (ecs_os_cond_t) callconv(.C) void;
+pub const ecs_os_api_cond_signal_t = ?*const fn (ecs_os_cond_t) callconv(.C) void;
 
-pub const ecs_os_api_cond_broadcast_t = ?fn (ecs_os_cond_t) callconv(.C) void;
+pub const ecs_os_api_cond_broadcast_t = ?*const fn (ecs_os_cond_t) callconv(.C) void;
 
-pub const ecs_os_api_cond_wait_t = ?fn (ecs_os_cond_t, ecs_os_mutex_t) callconv(.C) void;
+pub const ecs_os_api_cond_wait_t = ?*const fn (ecs_os_cond_t, ecs_os_mutex_t) callconv(.C) void;
 
-pub const ecs_os_api_sleep_t = ?fn (i32, i32) callconv(.C) void;
+pub const ecs_os_api_sleep_t = ?*const fn (i32, i32) callconv(.C) void;
 
-pub const ecs_os_api_enable_high_timer_resolution_t = ?fn (bool) callconv(.C) void;
+pub const ecs_os_api_enable_high_timer_resolution_t = ?*const fn (bool) callconv(.C) void;
 
-pub const ecs_os_api_get_time_t = ?fn ([*c]ecs_time_t) callconv(.C) void;
+pub const ecs_os_api_get_time_t = ?*const fn ([*c]ecs_time_t) callconv(.C) void;
 
-pub const ecs_os_api_now_t = ?fn () callconv(.C) u64;
+pub const ecs_os_api_now_t = ?*const fn () callconv(.C) u64;
 
-pub const ecs_os_api_log_t = ?fn (i32, [*c]const u8, i32, [*c]const u8) callconv(.C) void;
+pub const ecs_os_api_log_t = ?*const fn (i32, [*c]const u8, i32, [*c]const u8) callconv(.C) void;
 
-pub const ecs_os_api_abort_t = ?fn () callconv(.C) void;
+pub const ecs_os_api_abort_t = ?*const fn () callconv(.C) void;
 
-pub const ecs_os_api_dlopen_t = ?fn ([*c]const u8) callconv(.C) ecs_os_dl_t;
+pub const ecs_os_api_dlopen_t = ?*const fn ([*c]const u8) callconv(.C) ecs_os_dl_t;
 
-pub const ecs_os_api_dlproc_t = ?fn (ecs_os_dl_t, [*c]const u8) callconv(.C) ecs_os_proc_t;
+pub const ecs_os_api_dlproc_t = ?*const fn (ecs_os_dl_t, [*c]const u8) callconv(.C) ecs_os_proc_t;
 
-pub const ecs_os_api_dlclose_t = ?fn (ecs_os_dl_t) callconv(.C) void;
+pub const ecs_os_api_dlclose_t = ?*const fn (ecs_os_dl_t) callconv(.C) void;
 
-pub const ecs_os_api_module_to_path_t = ?fn ([*c]const u8) callconv(.C) [*c]u8;
+pub const ecs_os_api_module_to_path_t = ?*const fn ([*c]const u8) callconv(.C) [*c]u8;
 
 pub const struct_ecs_os_api_t = extern struct {
     init_: ecs_os_api_init_t,
@@ -2090,11 +2090,11 @@ pub const struct_ecs_iter_private_t = extern struct {
 
 pub const ecs_iter_private_t = struct_ecs_iter_private_t;
 
-pub const ecs_iter_next_action_t = ?fn ([*c]ecs_iter_t) callconv(.C) bool;
+pub const ecs_iter_next_action_t = ?*const fn ([*c]ecs_iter_t) callconv(.C) bool;
 
-pub const ecs_iter_action_t = ?fn ([*c]ecs_iter_t) callconv(.C) void;
+pub const ecs_iter_action_t = ?*const fn ([*c]ecs_iter_t) callconv(.C) void;
 
-pub const ecs_iter_fini_action_t = ?fn ([*c]ecs_iter_t) callconv(.C) void;
+pub const ecs_iter_fini_action_t = ?*const fn ([*c]ecs_iter_t) callconv(.C) void;
 
 pub const struct_ecs_iter_t = extern struct {
     world: ?*ecs_world_t,
@@ -2182,7 +2182,7 @@ pub const struct_ecs_iter_t = extern struct {
 
 pub const ecs_iter_t = struct_ecs_iter_t;
 
-pub const ecs_iter_init_action_t = ?fn (?*const ecs_world_t, ?*const ecs_poly_t, [*c]ecs_iter_t, [*c]ecs_term_t) callconv(.C) void;
+pub const ecs_iter_init_action_t = ?*const fn (?*const ecs_world_t, ?*const ecs_poly_t, [*c]ecs_iter_t, [*c]ecs_term_t) callconv(.C) void;
 
 pub const struct_ecs_iterable_t = extern struct {
     init: ecs_iter_init_action_t,
@@ -2212,7 +2212,7 @@ pub const struct_ecs_filter_t = extern struct {
     iterable: ecs_iterable_t,
 };
 
-pub const ecs_ctx_free_t = ?fn (?*anyopaque) callconv(.C) void;
+pub const ecs_ctx_free_t = ?*const fn (?*anyopaque) callconv(.C) void;
 
 pub const struct_ecs_sparse_t = extern struct {
     dense: ?*ecs_vector_t,
@@ -2272,7 +2272,7 @@ pub const struct_ecs_trigger_t = extern struct {
 
 pub const ecs_trigger_t = struct_ecs_trigger_t;
 
-pub const ecs_run_action_t = ?fn ([*c]ecs_iter_t) callconv(.C) void;
+pub const ecs_run_action_t = ?*const fn ([*c]ecs_iter_t) callconv(.C) void;
 
 pub const struct_ecs_observer_t = extern struct {
     filter: ecs_filter_t,
@@ -2312,11 +2312,11 @@ pub const ecs_observer_t = struct_ecs_observer_t;
 
 pub const ecs_type_info_t = struct_ecs_type_info_t;
 
-pub const ecs_xtor_t = ?fn (?*anyopaque, i32, [*c]const ecs_type_info_t) callconv(.C) void;
+pub const ecs_xtor_t = ?*const fn (?*anyopaque, i32, [*c]const ecs_type_info_t) callconv(.C) void;
 
-pub const ecs_copy_t = ?fn (?*anyopaque, ?*const anyopaque, i32, [*c]const ecs_type_info_t) callconv(.C) void;
+pub const ecs_copy_t = ?*const fn (?*anyopaque, ?*const anyopaque, i32, [*c]const ecs_type_info_t) callconv(.C) void;
 
-pub const ecs_move_t = ?fn (?*anyopaque, ?*anyopaque, i32, [*c]const ecs_type_info_t) callconv(.C) void;
+pub const ecs_move_t = ?*const fn (?*anyopaque, ?*anyopaque, i32, [*c]const ecs_type_info_t) callconv(.C) void;
 
 pub const struct_EcsComponentLifecycle = extern struct {
     ctor: ecs_xtor_t,
@@ -2358,17 +2358,17 @@ pub const struct_ecs_type_info_t = extern struct {
     lifecycle_set: bool,
 };
 
-pub const ecs_order_by_action_t = ?fn (ecs_entity_t, ?*const anyopaque, ecs_entity_t, ?*const anyopaque) callconv(.C) c_int;
+pub const ecs_order_by_action_t = ?*const fn (ecs_entity_t, ?*const anyopaque, ecs_entity_t, ?*const anyopaque) callconv(.C) c_int;
 
-pub const ecs_group_by_action_t = ?fn (?*ecs_world_t, ?*ecs_table_t, ecs_id_t, ?*anyopaque) callconv(.C) u64;
+pub const ecs_group_by_action_t = ?*const fn (?*ecs_world_t, ?*ecs_table_t, ecs_id_t, ?*anyopaque) callconv(.C) u64;
 
-pub const ecs_module_action_t = ?fn (?*ecs_world_t) callconv(.C) void;
+pub const ecs_module_action_t = ?*const fn (?*ecs_world_t) callconv(.C) void;
 
-pub const ecs_fini_action_t = ?fn (?*ecs_world_t, ?*anyopaque) callconv(.C) void;
+pub const ecs_fini_action_t = ?*const fn (?*ecs_world_t, ?*anyopaque) callconv(.C) void;
 
-pub const ecs_compare_action_t = ?fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
+pub const ecs_compare_action_t = ?*const fn (?*const anyopaque, ?*const anyopaque) callconv(.C) c_int;
 
-pub const ecs_hash_value_action_t = ?fn (?*const anyopaque) callconv(.C) u64;
+pub const ecs_hash_value_action_t = ?*const fn (?*const anyopaque) callconv(.C) u64;
 
 pub const struct_ecs_stage_t = opaque {};
 
@@ -3438,7 +3438,7 @@ pub extern fn ecs_log_enable_colors(enabled: bool) bool;
 
 pub extern fn ecs_log_last_error() c_int;
 
-pub const ecs_app_init_action_t = ?fn (?*ecs_world_t) callconv(.C) c_int;
+pub const ecs_app_init_action_t = ?*const fn (?*ecs_world_t) callconv(.C) c_int;
 
 pub const struct_ecs_app_desc_t = extern struct {
     target_fps: f32,
@@ -3456,9 +3456,9 @@ pub const struct_ecs_app_desc_t = extern struct {
 
 pub const ecs_app_desc_t = struct_ecs_app_desc_t;
 
-pub const ecs_app_run_action_t = ?fn (?*ecs_world_t, [*c]ecs_app_desc_t) callconv(.C) c_int;
+pub const ecs_app_run_action_t = ?*const fn (?*ecs_world_t, [*c]ecs_app_desc_t) callconv(.C) c_int;
 
-pub const ecs_app_frame_action_t = ?fn (?*ecs_world_t, [*c]const ecs_app_desc_t) callconv(.C) c_int;
+pub const ecs_app_frame_action_t = ?*const fn (?*ecs_world_t, [*c]const ecs_app_desc_t) callconv(.C) c_int;
 
 pub extern fn ecs_app_run(world: ?*ecs_world_t, desc: [*c]ecs_app_desc_t) c_int;
 
@@ -3564,7 +3564,7 @@ pub const enum_ecs_system_status_t = c_uint;
 
 pub const ecs_system_status_t = enum_ecs_system_status_t;
 
-pub const ecs_system_status_action_t = ?fn (?*ecs_world_t, ecs_entity_t, ecs_system_status_t, ?*anyopaque) callconv(.C) void;
+pub const ecs_system_status_action_t = ?*const fn (?*ecs_world_t, ecs_entity_t, ecs_system_status_t, ?*anyopaque) callconv(.C) void;
 
 pub const struct_ecs_system_desc_t = extern struct {
     _canary: i32,
@@ -4545,7 +4545,7 @@ pub const struct_ecs_meta_cursor_t = extern struct {
 
     is_primitive_scope: bool,
 
-    lookup_action: ?fn (?*const ecs_world_t, [*c]const u8, ?*anyopaque) callconv(.C) ecs_entity_t,
+    lookup_action: ?*const fn (?*const ecs_world_t, [*c]const u8, ?*anyopaque) callconv(.C) ecs_entity_t,
 
     lookup_ctx: ?*anyopaque,
 };
@@ -4717,7 +4717,7 @@ pub const struct_ecs_parse_expr_desc_t = extern struct {
 
     expr: [*c]const u8,
 
-    lookup_action: ?fn (?*const ecs_world_t, [*c]const u8, ?*anyopaque) callconv(.C) ecs_entity_t,
+    lookup_action: ?*const fn (?*const ecs_world_t, [*c]const u8, ?*anyopaque) callconv(.C) ecs_entity_t,
 
     lookup_ctx: ?*anyopaque,
 };
@@ -5020,7 +5020,7 @@ pub const ecs_http_reply_t = extern struct {
     headers: ecs_strbuf_t,
 };
 
-pub const ecs_http_reply_action_t = ?fn ([*c]const ecs_http_request_t, [*c]ecs_http_reply_t, ?*anyopaque) callconv(.C) bool;
+pub const ecs_http_reply_action_t = ?*const fn ([*c]const ecs_http_request_t, [*c]ecs_http_reply_t, ?*anyopaque) callconv(.C) bool;
 
 pub const ecs_http_server_desc_t = extern struct {
     callback: ecs_http_reply_action_t,
@@ -6911,8 +6911,6 @@ pub const @"false" = @as(c_int, 0);
 pub const __bool_true_false_are_defined = @as(c_int, 1);
 
 pub inline fn ECS_SIZEOF(T: anytype) @TypeOf(ECS_CAST(ecs_size_t, @import("std").zig.c_translation.sizeof(T))) {
-    _ = T;
-
     return ECS_CAST(ecs_size_t, @import("std").zig.c_translation.sizeof(T));
 }
 
@@ -7215,14 +7213,10 @@ pub inline fn ecs_vector_copy_t(src: anytype, size: anytype, alignment: anytype)
 pub const FLECS_MAP_H = "";
 
 pub inline fn ecs_map_init(map: anytype, T: anytype, elem_count: anytype) @TypeOf(_ecs_map_init(map, @import("std").zig.c_translation.sizeof(T), elem_count)) {
-    _ = T;
-
     return _ecs_map_init(map, @import("std").zig.c_translation.sizeof(T), elem_count);
 }
 
 pub inline fn ecs_map_new(T: anytype, elem_count: anytype) @TypeOf(_ecs_map_new(@import("std").zig.c_translation.sizeof(T), elem_count)) {
-    _ = T;
-
     return _ecs_map_new(@import("std").zig.c_translation.sizeof(T), elem_count);
 }
 
