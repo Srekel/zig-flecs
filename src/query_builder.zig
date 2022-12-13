@@ -43,7 +43,7 @@ pub const QueryBuilder = struct {
     }
 
     pub fn without(self: *@This(), comptime T: type) *@This() {
-        self.desc.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.ecs_term_t, .{
+        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.ecs_term_t, .{
             .id = self.world.componentId(T),
             .oper = flecs.c.EcsNot,
         });
@@ -80,6 +80,11 @@ pub const QueryBuilder = struct {
         self.desc.query.filter.terms[self.terms_count - 1].inout = flecs.c.EcsInOutFilter;
         self.desc.query.filter.terms[self.terms_count - 2].inout = flecs.c.EcsInOutFilter;
         return self;
+    }
+
+    pub fn manualTerm(self: *@This()) *flecs.c.ecs_term_t {
+        self.terms_count += 1;
+        return &self.desc.query.filter.terms[self.terms_count - 1];
     }
 
     /// inject a plain old string expression into the builder
