@@ -64,11 +64,11 @@ pub const Entity = struct {
     }
 
     /// removes a relation to the object from the entity.
-    pub fn removePair (self: Entity, relation: anytype, object: anytype) void {
+    pub fn removePair(self: Entity, relation: anytype, object: anytype) void {
         return flecs.c.ecs_remove_id(self.world, self.id, self.getWorld().pair(relation, object));
     }
 
-    pub fn setPair(self: Entity, Relation: anytype, object: type, data: Relation) void {
+    pub fn setPair(self: Entity, Relation: anytype, comptime object: type, data: Relation) void {
         const pair = self.getWorld().pair(Relation, object);
         var component = &data;
         _ = flecs.c.ecs_set_id(self.world, self.id, pair, @sizeOf(Relation), component);
@@ -110,7 +110,7 @@ pub const Entity = struct {
         return null;
     }
 
-    pub fn getMut (self: Entity, comptime T: type) ?*T {
+    pub fn getMut(self: Entity, comptime T: type) ?*T {
         var is_added = false;
         var ptr = flecs.c.ecs_get_mut_id(self.world, self.id, meta.componentId(self.world, T), &is_added);
         if (ptr) |p| {

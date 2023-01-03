@@ -129,10 +129,10 @@ pub fn TableIteratorData(comptime Components: type) type {
     var fields: [src_fields.len]StructField = undefined;
 
     for (src_fields) |field, i| {
-        const T = FinalChild(field.field_type);
+        const T = FinalChild(field.type);
         fields[i] = .{
             .name = field.name,
-            .field_type = PointerToMany(field.field_type),
+            .type = PointerToMany(field.type),
             .default_value = null,
             .is_comptime = false,
             .alignment = @alignOf(*T),
@@ -184,8 +184,8 @@ pub fn validateIterator(comptime Components: type, iter: *const flecs.c.ecs_iter
         inline for (component_info.fields) |field| {
             // skip filters since they arent returned when we iterate
             while (iter.terms[index].inout == flecs.c.EcsInOutFilter) : (index += 1) {}
-            const is_optional = @typeInfo(field.field_type) == .Optional;
-            const col_type = FinalChild(field.field_type);
+            const is_optional = @typeInfo(field.type) == .Optional;
+            const col_type = FinalChild(field.type);
             const type_entity = meta.componentHandle(col_type).*;
 
             // ensure order matches for terms vs struct fields. note that pairs need to have their first term extracted.
@@ -196,7 +196,7 @@ pub fn validateIterator(comptime Components: type, iter: *const flecs.c.ecs_iter
             }
 
             // validate readonly (non-ptr types in the struct) matches up with the inout
-            const is_const = isConst(field.field_type);
+            const is_const = isConst(field.type);
             if (is_const) assert(iter.terms[index].inout == flecs.c.EcsIn);
             if (iter.terms[index].inout == flecs.c.EcsIn) assert(is_const);
 
@@ -232,7 +232,7 @@ pub fn validateOrderByType(comptime Components: type, comptime T: type) void {
 
         const component_info = @typeInfo(Components).Struct;
         inline for (component_info.fields) |field| {
-            if (FinalChild(field.field_type) == T) {
+            if (FinalChild(field.type) == T) {
                 valid = true;
             }
         }
@@ -283,8 +283,8 @@ fn registerReflectionData(world: *flecs.c.ecs_world_t, comptime T: type, entity:
                 member.name = field.name.ptr;
 
                 // TODO: support nested structs
-                member.type = switch (field.field_type) {
-                    // Struct => componentId(field.field_type),
+                member.type = switch (field.type) {
+                    // Struct => componentId(field.type),
                     bool => flecs.c.FLECS__Eecs_bool_t,
                     f32 => flecs.c.FLECS__Eecs_f32_t,
                     f64 => flecs.c.FLECS__Eecs_f64_t,
@@ -304,16 +304,16 @@ fn registerReflectionData(world: *flecs.c.ecs_world_t, comptime T: type, entity:
                     usize => flecs.c.FLECS__Eecs_uptr_t,
                     []const u8 => flecs.c.FLECS__Eecs_string_t,
                     [*]const u8 => flecs.c.FLECS__Eecs_string_t,
-                    else => switch (@typeInfo(field.field_type)) {
+                    else => switch (@typeInfo(field.type)) {
                         .Pointer => flecs.c.FLECS__Eecs_uptr_t,
 
-                        .Struct => componentId(world, field.field_type),
+                        .Struct => componentId(world, field.type),
 
                         .Enum => blk: {
                             var enum_desc = std.mem.zeroes(flecs.c.ecs_enum_desc_t);
                             enum_desc.entity.entity = meta.componentHandle(T).*;
 
-                            inline for (@typeInfo(field.field_type).Enum.fields) |f, index| {
+                            inline for (@typeInfo(field.type).Enum.fields) |f, index| {
                                 enum_desc.constants[index] = std.mem.zeroInit(flecs.c.ecs_enum_constant_t, .{
                                     .name = f.name.ptr,
                                     .value = @intCast(i32, f.value),
@@ -327,13 +327,13 @@ fn registerReflectionData(world: *flecs.c.ecs_world_t, comptime T: type, entity:
                             var array_desc = std.mem.zeroes(flecs.c.ecs_array_desc_t);
                             array_desc.type = flecs.c.FLECS__Eecs_f32_t;
                             array_desc.entity.entity = meta.componentHandle(T).*;
-                            array_desc.count = @typeInfo(field.field_type).Array.len;
+                            array_desc.count = @typeInfo(field.type).Array.len;
 
                             break :blk flecs.c.ecs_array_init(world, &array_desc);
                         },
 
                         else => {
-                            std.debug.print("unhandled field type: {any}, ti: {any}\n", .{ field.field_type, @typeInfo(field.field_type) });
+                            std.debug.print("unhandled field type: {any}, ti: {any}\n", .{ field.type, @typeInfo(field.type) });
                             unreachable;
                         },
                     },
@@ -354,12 +354,12 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
     // first, extract what we can from the Components fields
     const component_info = @typeInfo(Components).Struct;
     inline for (component_info.fields) |field, i| {
-        desc.terms[i].id = world.componentId(meta.FinalChild(field.field_type));
+        desc.terms[i].id = world.componentId(meta.FinalChild(field.type));
 
-        if (@typeInfo(field.field_type) == .Optional)
+        if (@typeInfo(field.type) == .Optional)
             desc.terms[i].oper = flecs.c.EcsOptional;
 
-        if (meta.isConst(field.field_type))
+        if (meta.isConst(field.type))
             desc.terms[i].inout = flecs.c.EcsIn;
     }
 

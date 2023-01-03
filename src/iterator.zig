@@ -59,7 +59,7 @@ pub fn Iterator(comptime Components: type) type {
                 var column = @field(self.inner_iter.?.columns, field.name);
 
                 // for optionals, we have to unwrap the column since it is also optional
-                if (@typeInfo(field.field_type) == .Optional) {
+                if (@typeInfo(field.type) == .Optional) {
                     if (column) |col| {
                         @field(comps, field.name) = &col[self.index];
                     } else {
@@ -88,9 +88,9 @@ pub fn Iterator(comptime Components: type) type {
                 // skip filters and EcsNothing masks since they arent returned when we iterate
                 while (self.iter.terms[index].inout == flecs.c.EcsInOutFilter or self.iter.terms[index].subj.set.mask == flecs.c.EcsNothing) : (index += 1) {}
 
-                const is_optional = @typeInfo(field.field_type) == .Optional;
-                const col_type = meta.FinalChild(field.field_type);
-                if (meta.isConst(field.field_type)) std.debug.assert(flecs.c.ecs_term_is_readonly(self.iter, i + 1));
+                const is_optional = @typeInfo(field.type) == .Optional;
+                const col_type = meta.FinalChild(field.type);
+                if (meta.isConst(field.type)) std.debug.assert(flecs.c.ecs_term_is_readonly(self.iter, i + 1));
 
                 if (is_optional) @field(iter.columns, field.name) = null;
                 const column_index = self.iter.terms[index].index;

@@ -40,14 +40,14 @@ pub const TermInfo = struct {
                 term_info.field = @field(t, "field");
             }
 
-            t = fi.field_type;
+            t = fi.type;
         }
 
         // if the final unwrapped type is an Or it will have term_type1
         if (std.meta.fieldIndex(t, "term_type1")) |_| {
             const fields = std.meta.fields(t);
-            t = fields[0].field_type;
-            term_info.or_term_type = fields[1].field_type;
+            t = fields[0].type;
+            term_info.or_term_type = fields[1].type;
 
             if (term_info.oper != 0) @compileError("Bad oper in query. Previous modifier already set oper. " ++ @typeName(T));
             term_info.oper = flecs.c.EcsOr;
@@ -57,10 +57,10 @@ pub const TermInfo = struct {
         if (std.meta.fieldIndex(t, "obj_type")) |obj_idx| {
             const fields = std.meta.fields(t);
             if (term_info.obj_type != null) @compileError("Bad obj_type in query. Previous modifier already set obj_type. " ++ @typeName(T));
-            term_info.obj_type = fields[obj_idx].field_type;
+            term_info.obj_type = fields[obj_idx].type;
 
             if (std.meta.fieldIndex(t, "relation_type")) |relation_idx| {
-                term_info.relation_type = fields[relation_idx].field_type;
+                term_info.relation_type = fields[relation_idx].type;
             } else unreachable;
 
             if (@hasDecl(t, "field")) {
@@ -69,7 +69,7 @@ pub const TermInfo = struct {
                 term_info.field = @field(t, "field");
             }
 
-            t = fields[0].field_type;
+            t = fields[0].type;
         }
 
         assert(!@hasDecl(t, "term_type") and !@hasDecl(t, "term_type1"));
