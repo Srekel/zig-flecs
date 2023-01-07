@@ -285,6 +285,13 @@ pub const World = struct {
         _ = flecs.c.ecs_set_id(self.world, entity, self.componentId(T), @sizeOf(T), component);
     }
 
+    pub fn getMutKnown(self: *World, entity: flecs.EntityId, comptime T: type) *T {
+        var is_added = false;
+        var ptr = flecs.c.ecs_get_mut_id(self.world, entity.id, meta.componentId(self.world, T), &is_added);
+        std.debug.assert(!is_added);
+        return @ptrCast(*T, @alignCast(@alignOf(T), ptr.?));
+    }
+
     /// removes a component from an Entity
     pub fn remove(self: *World, entity: flecs.EntityId, comptime T: type) void {
         flecs.c.ecs_remove_id(self.world, entity, self.componentId(T));
