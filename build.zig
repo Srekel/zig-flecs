@@ -78,7 +78,7 @@ pub fn link(exe: *std.build.LibExeObjStep, target: std.zig.CrossTarget) void {
         exe.linkSystemLibrary("Ws2_32");
     }
 
-    exe.addCSourceFile(thisDir() ++ "/src/c/flecs.c", &.{""});
+    exe.addCSourceFile(thisDir() ++ "/src/c/flecs.c", &.{ "-g", "-O0" });
 }
 
 inline fn thisDir() []const u8 {
