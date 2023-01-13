@@ -1,5 +1,48 @@
 const builtin = @import("builtin");
 
+pub extern const FLECS__EEcsMetaType: EcsEntity;
+pub extern const FLECS__EEcsMetaTypeSerialized: EcsEntity;
+pub extern const FLECS__EEcsPrimitive: EcsEntity;
+pub extern const FLECS__EEcsEnum: EcsEntity;
+pub extern const FLECS__EEcsBitmask: EcsEntity;
+pub extern const FLECS__EEcsMember: EcsEntity;
+pub extern const FLECS__EEcsStruct: EcsEntity;
+pub extern const FLECS__EEcsArray: EcsEntity;
+pub extern const FLECS__EEcsVector: EcsEntity;
+pub extern const FLECS__EEcsUnit: EcsEntity;
+pub extern const FLECS__EEcsUnitPrefix: EcsEntity;
+pub extern const EcsConstant: EcsEntity;
+pub extern const EcsQuantity: EcsEntity;
+pub extern const FLECS__Eecs_bool_t: EcsEntity;
+pub extern const FLECS__Eecs_char_t: EcsEntity;
+pub extern const FLECS__Eecs_byte_t: EcsEntity;
+pub extern const FLECS__Eecs_u8_t: EcsEntity;
+pub extern const FLECS__Eecs_u16_t: EcsEntity;
+pub extern const FLECS__Eecs_u32_t: EcsEntity;
+pub extern const FLECS__Eecs_u64_t: EcsEntity;
+pub extern const FLECS__Eecs_uptr_t: EcsEntity;
+pub extern const FLECS__Eecs_i8_t: EcsEntity;
+pub extern const FLECS__Eecs_i16_t: EcsEntity;
+pub extern const FLECS__Eecs_i32_t: EcsEntity;
+pub extern const FLECS__Eecs_i64_t: EcsEntity;
+pub extern const FLECS__Eecs_iptr_t: EcsEntity;
+pub extern const FLECS__Eecs_f32_t: EcsEntity;
+pub extern const FLECS__Eecs_f64_t: EcsEntity;
+pub extern const FLECS__Eecs_string_t: EcsEntity;
+pub extern const FLECS__Eecs_entity_t: EcsEntity;
+
+pub const struct_ecs_array_desc_t = extern struct {
+    entity: EcsEntity,
+    type: EcsEntity,
+    count: i32,
+};
+pub const ecs_array_desc_t = struct_ecs_array_desc_t;
+pub extern fn ecs_array_init(world: ?*EcsWorld, desc: [*c]const ecs_array_desc_t) EcsEntity;
+pub const struct_ecs_vector_desc_t = extern struct {
+    entity: EcsEntity,
+    type: EcsEntity,
+};
+
 pub const ECS_HI_COMPONENT_ID = @as(c_int, 256);
 
 pub const EcsInOutKind = enum(c_int) {
@@ -480,6 +523,72 @@ pub const EcsEventDesc = extern struct {
     flags: EcsFlags32,
 };
 
+pub const struct_ecs_member_t = extern struct {
+    type: EcsEntity,
+    count: i32,
+    unit: EcsEntity,
+    offset: i32,
+};
+pub const ecs_member_t = struct_ecs_member_t;
+pub const EcsMember = extern struct {
+    name: [*c]const u8,
+    type: EcsEntity,
+    count: i32,
+    offset: i32,
+    unit: EcsEntity,
+    size: EcsSize,
+    member: EcsEntity,
+};
+
+pub const struct_ecs_struct_desc_t = extern struct {
+    entity: EcsEntity,
+    members: [32]EcsMember,
+};
+pub const EcsStructDesc = struct_ecs_struct_desc_t;
+pub extern fn ecs_struct_init(world: ?*EcsWorld, desc: [*c]const EcsStructDesc) EcsEntity;
+pub const struct_ecs_unit_desc_t = extern struct {
+    entity: EcsEntity,
+    symbol: [*c]const u8,
+    quantity: EcsEntity,
+    base: EcsEntity,
+    over: EcsEntity,
+    translation: EcsUnitTranslation,
+    prefix: EcsEntity,
+};
+
+pub const struct_ecs_unit_translation_t = extern struct {
+    factor: i32,
+    power: i32,
+};
+pub const EcsUnitTranslation = struct_ecs_unit_translation_t;
+pub const struct_EcsUnit = extern struct {
+    symbol: [*c]u8,
+    prefix: EcsEntity,
+    base: EcsEntity,
+    over: EcsEntity,
+    translation: EcsUnitTranslation,
+};
+pub const EcsUnit = struct_EcsUnit;
+pub const struct_EcsUnitPrefix = extern struct {
+    symbol: [*c]u8,
+    translation: EcsUnitTranslation,
+};
+pub const EcsUnitPrefix = struct_EcsUnitPrefix;
+
+pub const struct_ecs_enum_constant_t = extern struct {
+    name: [*c]const u8,
+    value: i32,
+    constant: EcsEntity,
+};
+pub const ecs_enum_constant_t = struct_ecs_enum_constant_t;
+
+pub const struct_ecs_enum_desc_t = extern struct {
+    entity: EcsEntity,
+    constants: [32]ecs_enum_constant_t,
+};
+pub const ecs_enum_desc_t = struct_ecs_enum_desc_t;
+pub extern fn ecs_enum_init(world: ?*EcsWorld, desc: [*c]const ecs_enum_desc_t) EcsEntity;
+
 pub const EcsCmd = extern struct {
     add_count: i64,
     remove_count: i64,
@@ -520,14 +629,6 @@ pub const EcsWorldInfo = extern struct {
     pipeline_build_count_total: i64,
     systems_ran_frame: i64,
     observers_ran_frame: i64,
-    frame_count_total: i32,
-    merge_count_total: i32,
-    id_create_total: i32,
-    id_delete_total: i32,
-    table_create_total: i32,
-    table_delete_total: i32,
-    pipeline_build_count_total: i32,
-    systems_ran_frame: i32,
     id_count: i32,
     tag_id_count: i32,
     component_id_count: i32,
@@ -655,6 +756,27 @@ pub const EcsEventRecord = extern struct {
     event_ids: EcsMap,
     event: EcsEntity,
 };
+
+pub const struct_ecs_observer_t = extern struct {
+    hdr: EcsHeader,
+    filter: EcsFilter,
+    events: [8]EcsEntity,
+    event_count: i32,
+    callback: EcsIterAction,
+    run: EcsRunAction,
+    ctx: ?*anyopaque,
+    binding_ctx: ?*anyopaque,
+    ctx_free: EcsCtxFree,
+    binding_ctx_free: EcsCtxFree,
+    observable: [*c]EcsObservable,
+    last_event_id: [*c]i32,
+    register_id: EcsId,
+    term_index: i32,
+    is_monitor: bool,
+    is_multi: bool,
+    dtor: EcsPolyDtor,
+};
+pub const ecs_observer_t = struct_ecs_observer_t;
 
 pub const EcsObservable = extern struct {
     on_add: EcsEventRecord,
@@ -1072,4 +1194,17 @@ pub const Constants = struct {
     pub extern const EcsOnStore: EcsEntity;
     pub extern const EcsPostFrame: EcsEntity;
     pub extern const EcsPhase: EcsEntity;
+
+    pub const EcsSelf = @as(c_uint, 1) << @as(c_int, 1);
+    pub const EcsUp = @as(c_uint, 1) << @as(c_int, 2);
+    pub const EcsDown = @as(c_uint, 1) << @as(c_int, 3);
+    pub const EcsTraverseAll = @as(c_uint, 1) << @as(c_int, 4);
+    pub const EcsCascade = @as(c_uint, 1) << @as(c_int, 5);
+    pub const EcsParent = @as(c_uint, 1) << @as(c_int, 6);
+    pub const EcsIsVariable = @as(c_uint, 1) << @as(c_int, 7);
+    pub const EcsIsEntity = @as(c_uint, 1) << @as(c_int, 8);
+    pub const EcsFilter = @as(c_uint, 1) << @as(c_int, 9);
+    pub const EcsTraverseFlags = ((((EcsUp | EcsDown) | EcsTraverseAll) | EcsSelf) | EcsCascade) | EcsParent;
+
+    pub const EcsFilterMagic = 0x65637366;
 };

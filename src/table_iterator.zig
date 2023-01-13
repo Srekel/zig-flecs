@@ -44,7 +44,7 @@ pub fn TableIterator(comptime Components: type) type {
 
                 const is_optional = @typeInfo(field.type) == .Optional;
                 const col_type = meta.FinalChild(field.type);
-                if (meta.isConst(field.type)) std.debug.assert(flecs.c.ecs_term_is_readonly(self.iter, i + 1));
+                if (meta.isConst(field.type)) std.debug.assert(flecs.c.ecs_field_is_readonly(self.iter, i + 1));
 
                 if (is_optional) @field(iter.data, field.name) = null;
                 const column_index = self.iter.terms[index].index;

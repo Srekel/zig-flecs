@@ -45,7 +45,7 @@ pub const Entity = struct {
 
     /// shortcut for addPair(ChildOf, parent). Allowed parent types: Entity, EntityId, type
     pub fn childOf(self: Entity, parent: anytype) void {
-        self.addPair(flecs.c.EcsChildOf, parent);
+        self.addPair(flecs.c.Constants.EcsChildOf, parent);
     }
 
     /// shortcut for addPair(IsA, base). Allowed base types: Entity, EntityId, type
@@ -111,8 +111,7 @@ pub const Entity = struct {
     }
 
     pub fn getMut(self: Entity, comptime T: type) ?*T {
-        var is_added = false;
-        var ptr = flecs.c.ecs_get_mut_id(self.world, self.id, meta.componentId(self.world, T), &is_added);
+        var ptr = flecs.c.ecs_get_mut_id(self.world, self.id, meta.componentId(self.world, T));
         if (ptr) |p| {
             return @ptrCast(*T, @alignCast(@alignOf(T), p));
         }

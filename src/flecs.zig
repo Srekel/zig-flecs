@@ -44,15 +44,15 @@ pub const Phase = enum(c.EcsId) {
 
 pub const Event = enum(c.EcsId) {
     // Event. Triggers when an id (component, tag, pair) is added to an entity
-    on_add = c.ECS_HI_COMPONENT_ID + 30,
+    on_add = c.ECS_HI_COMPONENT_ID + 33,
     // Event. Triggers when an id (component, tag, pair) is removed from an entity
-    on_remove = c.ECS_HI_COMPONENT_ID + 31,
+    on_remove = c.ECS_HI_COMPONENT_ID + 34,
     // Event. Triggers when a component is set for an entity
-    on_set = c.ECS_HI_COMPONENT_ID + 32,
+    on_set = c.ECS_HI_COMPONENT_ID + 35,
     // Event. Triggers when a component is unset for an entity
-    un_set = c.ECS_HI_COMPONENT_ID + 33,
+    un_set = c.ECS_HI_COMPONENT_ID + 36,
     // Event. Triggers when an entity is deleted.
-    on_delete = c.ECS_HI_COMPONENT_ID + 34,
+    on_delete = c.ECS_HI_COMPONENT_ID + 37,
     // Event. Exactly-once trigger for when an entity matches/unmatches a filter
     monitor = c.ECS_HI_COMPONENT_ID + 61,
 };
@@ -76,7 +76,7 @@ pub const Event = enum(c.EcsId) {
 // };
 
 pub fn pairFirst(id: EntityId) u32 {
-    return @truncate(u32, (id & c.ECS_COMPONENT_MASK) >> 32);
+    return @truncate(u32, (id & c.Constants.ECS_COMPONENT_MASK) >> 32);
 }
 
 pub fn pairSecond(id: EntityId) u32 {

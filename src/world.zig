@@ -4,16 +4,16 @@ const utils = @import("utils.zig");
 const meta = @import("meta.zig");
 
 const Entity = flecs.Entity;
-const FlecsOrderByAction = fn (flecs.c.ecs_entity_t, ?*const anyopaque, flecs.c.ecs_entity_t, ?*const anyopaque) callconv(.C) c_int;
+const FlecsOrderByAction = fn (flecs.c.EcsEntity, ?*const anyopaque, flecs.c.EcsEntity, ?*const anyopaque) callconv(.C) c_int;
 
-fn dummyFn(_: [*c]flecs.c.ecs_iter_t) callconv(.C) void {}
+fn dummyFn(_: [*c]flecs.c.EcsIter) callconv(.C) void {}
 
 const SystemParameters = struct {
     ctx: ?*anyopaque,
 };
 
 pub const World = struct {
-    world: *flecs.EcsWorld,
+    world: *flecs.c.EcsWorld,
 
     pub fn init() World {
         return .{ .world = flecs.c.ecs_init().? };
@@ -91,7 +91,7 @@ pub const World = struct {
             else => unreachable,
         };
 
-        return flecs.c.ECS_PAIR | (rel_id << @as(u32, 32)) + @truncate(u32, obj_id);
+        return flecs.c.Constants.ECS_PAIR | (rel_id << @as(u32, 32)) + @truncate(u32, obj_id);
     }
 
     /// bulk registers a tuple of Types
@@ -149,7 +149,7 @@ pub const World = struct {
     }
 
     pub fn newSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.EcsIterAction) void {
-        var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
+        var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
         desc.entity.name = name;
         desc.entity.add[0] = @enumToInt(phase);
         desc.query.filter.expr = signature;
@@ -159,7 +159,7 @@ pub const World = struct {
     }
 
     pub fn newRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.EcsIterAction) void {
-        var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
+        var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
         desc.entity.name = name;
         desc.entity.add[0] = @enumToInt(phase);
         desc.query.filter.expr = signature;
@@ -170,11 +170,16 @@ pub const World = struct {
     }
 
     pub fn newWrappedRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, comptime Components: type, comptime action: fn (*flecs.Iterator(Components)) void, params: SystemParameters) flecs.EntityId {
-        var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
-        desc.entity.name = name;
-        desc.entity.add[0] = @enumToInt(phase);
+        var edesc = std.mem.zeroes(flecs.c.EcsEntityDesc);
+
+        edesc.id = 0;
+        edesc.name = name;
+        edesc.add[0] = flecs.ecs_pair(flecs.c.Constants.EcsDependsOn, @enumToInt(phase));
+        edesc.add[1] = @enumToInt(phase);
+
+        var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
+        desc.entity = flecs.c.ecs_entity_init(self.world, &edesc);
         desc.query.filter = meta.generateFilterDesc(self, Components);
-        // desc.multi_threaded = true;
         desc.callback = dummyFn;
         desc.run = wrapSystemFn(Components, action);
         desc.ctx = params.ctx;
@@ -225,7 +230,7 @@ pub const World = struct {
         std.debug.assert(@hasDecl(Components, "run"));
         std.debug.assert(@hasDecl(Components, "name"));
 
-        var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
+        var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
         desc.callback = dummyFn;
         desc.entity.name = Components.name;
         desc.entity.add[0] = @enumToInt(phase);
@@ -254,10 +259,11 @@ pub const World = struct {
         std.debug.assert(@hasDecl(Components, "run"));
         std.debug.assert(@hasDecl(Components, "name"));
 
-        var desc = std.mem.zeroes(flecs.c.ecs_observer_desc_t);
+        var desc = std.mem.zeroes(flecs.c.EcsObserverDesc);
         desc.callback = dummyFn;
         desc.ctx = ctx;
-        desc.entity.name = Components.name;
+        // TODO
+        // desc.entity.name = Components.name;
         desc.events[0] = @enumToInt(event);
 
         desc.run = wrapSystemFn(Components, Components.run);
@@ -285,10 +291,8 @@ pub const World = struct {
         _ = flecs.c.ecs_set_id(self.world, entity, self.componentId(T), @sizeOf(T), component);
     }
 
-    pub fn getMutKnown(self: *World, entity: flecs.EntityId, comptime T: type) *T {
-        var is_added = false;
-        var ptr = flecs.c.ecs_get_mut_id(self.world, entity.id, meta.componentId(self.world, T), &is_added);
-        std.debug.assert(!is_added);
+    pub fn getMut(self: *World, entity: flecs.EntityId, comptime T: type) *T {
+        var ptr = flecs.c.ecs_get_mut_id(self.world, entity.id, meta.componentId(self.world, T));
         return @ptrCast(*T, @alignCast(@alignOf(T), ptr.?));
     }
 
@@ -347,11 +351,11 @@ pub const World = struct {
     }
 };
 
-fn wrapSystemFn(comptime T: type, comptime cb: fn (*flecs.Iterator(T)) void) fn ([*c]flecs.c.ecs_iter_t) callconv(.C) void {
+fn wrapSystemFn(comptime T: type, comptime cb: fn (*flecs.Iterator(T)) void) fn ([*c]flecs.c.EcsIter) callconv(.C) void {
     const Closure = struct {
         pub const callback: fn (*flecs.Iterator(T)) void = cb;
 
-        pub fn closure(it: [*c]flecs.c.ecs_iter_t) callconv(.C) void {
+        pub fn closure(it: [*c]flecs.c.EcsIter) callconv(.C) void {
             var iter = flecs.Iterator(T).init(it, flecs.c.ecs_iter_next);
             callback(&iter);
         }

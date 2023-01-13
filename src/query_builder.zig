@@ -9,7 +9,7 @@ pub const QueryBuilder = struct {
     pub fn init(world: flecs.World) @This() {
         return .{
             .world = world,
-            .desc = std.mem.zeroes(flecs.c.ecs_system_desc_t),
+            .desc = std.mem.zeroes(flecs.c.EcsSystemDesc),
         };
     }
 

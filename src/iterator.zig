@@ -86,15 +86,15 @@ pub fn Iterator(comptime Components: type) type {
             var index: usize = 0;
             inline for (@typeInfo(Components).Struct.fields) |field, i| {
                 // skip filters and EcsNothing masks since they arent returned when we iterate
-                while (self.iter.terms[index].inout == .ecs_in_out_none or self.iter.terms[index].src.flags == .ecs_nothing) : (index += 1) {}
+                while (self.iter.terms[index].inout == .ecs_in_out_none or self.iter.terms[index].src.flags == flecs.c.Constants.EcsIsEntity) : (index += 1) {}
 
                 const is_optional = @typeInfo(field.type) == .Optional;
                 const col_type = meta.FinalChild(field.type);
-                if (meta.isConst(field.type)) std.debug.assert(flecs.c.ecs_term_is_readonly(self.iter, i + 1));
+                if (meta.isConst(field.type)) std.debug.assert(flecs.c.ecs_field_is_readonly(self.iter, i + 1));
 
                 if (is_optional) @field(iter.columns, field.name) = null;
-                const column_index = self.iter.terms[index].index;
-                const raw_term_id = flecs.c.ecs_term_id(self.iter, @intCast(usize, column_index + 1));
+                const column_index = self.iter.terms[index].field_index;
+                const raw_term_id = flecs.c.ecs_field_id(self.iter, column_index + 1);
                 const term_id = if (flecs.c.ecs_id_is_pair(raw_term_id)) flecs.pairFirst(raw_term_id) else raw_term_id;
                 var skip_term = if (is_optional) meta.componentHandle(col_type).* != term_id else false;
 

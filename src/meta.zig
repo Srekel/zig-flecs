@@ -35,10 +35,15 @@ pub fn componentId(world: *flecs.c.EcsWorld, comptime T: type) flecs.EntityId {
         var desc = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .name = @typeName(T) });
         handle.* = flecs.c.ecs_entity_init(world, &desc);
     } else {
+        var edesc = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .name = @typeName(T) });
         var desc = std.mem.zeroInit(flecs.c.EcsComponentDesc, .{
-            .entity = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .name = @typeName(T) }),
-            .size = @sizeOf(T),
-            .alignment = @alignOf(T),
+            .entity = flecs.c.ecs_entity_init(world, &edesc),
+            .type = .{
+                .size = @sizeOf(T),
+                .alignment = @alignOf(T),
+                .hooks = std.mem.zeroInit(flecs.EcsTypeHooks, .{}),
+                .component = 0,
+            },
         });
         handle.* = flecs.c.ecs_component_init(world, &desc);
     }
@@ -270,8 +275,8 @@ pub fn isConst(comptime T: type) bool {
 
 /// https://github.com/SanderMertens/flecs/tree/master/examples/c/reflection
 fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: flecs.EntityId) void {
-    var entityDesc = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .entity = entity });
-    var desc = std.mem.zeroInit(flecs.c.ecs_struct_desc_t, .{ .entity = entityDesc });
+    // var entityDesc = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .entity = entity });
+    var desc = std.mem.zeroInit(flecs.c.EcsStructDesc, .{ .entity = entity });
 
     switch (@typeInfo(T)) {
         .Struct => |si| {
@@ -279,7 +284,7 @@ fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: fl
             if (@sizeOf(T) == 0) return;
 
             inline for (si.fields) |field, i| {
-                var member = std.mem.zeroes(flecs.c.ecs_member_t);
+                var member = std.mem.zeroes(flecs.c.EcsMember);
                 member.name = field.name.ptr;
 
                 // TODO: support nested structs
@@ -311,7 +316,8 @@ fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: fl
 
                         .Enum => blk: {
                             var enum_desc = std.mem.zeroes(flecs.c.ecs_enum_desc_t);
-                            enum_desc.entity.entity = meta.componentHandle(T).*;
+                            // TODO
+                            enum_desc.entity = meta.componentHandle(T).*;
 
                             inline for (@typeInfo(field.type).Enum.fields) |f, index| {
                                 enum_desc.constants[index] = std.mem.zeroInit(flecs.c.ecs_enum_constant_t, .{
@@ -326,7 +332,7 @@ fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: fl
                         .Array => blk: {
                             var array_desc = std.mem.zeroes(flecs.c.ecs_array_desc_t);
                             array_desc.type = flecs.c.FLECS__Eecs_f32_t;
-                            array_desc.entity.entity = meta.componentHandle(T).*;
+                            array_desc.entity = meta.componentHandle(T).*;
                             array_desc.count = @typeInfo(field.type).Array.len;
 
                             break :blk flecs.c.ecs_array_init(world, &array_desc);
@@ -346,10 +352,10 @@ fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: fl
     }
 }
 
-/// given a struct of Components with optional embedded "metadata", "name", "order_by" data it generates an ecs_filter_desc_t
-pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c.ecs_filter_desc_t {
+/// given a struct of Components with optional embedded "metadata", "name", "order_by" data it generates an EcsFilterDesc
+pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c.EcsFilterDesc {
     assert(@typeInfo(Components) == .Struct);
-    var desc = std.mem.zeroes(flecs.c.ecs_filter_desc_t);
+    var desc = std.mem.zeroes(flecs.c.EcsFilterDesc);
 
     // first, extract what we can from the Components fields
     const component_info = @typeInfo(Components).Struct;
