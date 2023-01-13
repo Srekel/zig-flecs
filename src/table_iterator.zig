@@ -13,10 +13,10 @@ pub fn TableIterator(comptime Components: type) type {
             count: i32,
         };
 
-        iter: *flecs.c.ecs_iter_t,
-        nextFn: fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool,
+        iter: *flecs.c.EcsIter,
+        nextFn: fn ([*c]flecs.c.EcsIter) callconv(.C) bool,
 
-        pub fn init(iter: *flecs.c.ecs_iter_t, nextFn: fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool) @This() {
+        pub fn init(iter: *flecs.c.EcsIter, nextFn: fn ([*c]flecs.c.EcsIter) callconv(.C) bool) @This() {
             meta.validateIterator(Components, iter);
             return .{
                 .iter = iter,
@@ -40,7 +40,7 @@ pub fn TableIterator(comptime Components: type) type {
             var index: usize = 0;
             inline for (@typeInfo(Components).Struct.fields) |field, i| {
                 // skip filters since they arent returned when we iterate
-                while (self.iter.terms[index].inout == flecs.c.EcsInOutFilter) : (index += 1) {}
+                while (self.iter.terms[index].inout == .ecs_in_out_none) : (index += 1) {}
 
                 const is_optional = @typeInfo(field.type) == .Optional;
                 const col_type = meta.FinalChild(field.type);

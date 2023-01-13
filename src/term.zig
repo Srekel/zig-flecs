@@ -10,13 +10,13 @@ pub fn Term(comptime T: anytype) type {
         const Self = @This();
 
         world: flecs.World,
-        term: flecs.c.ecs_term_t,
+        term: flecs.c.EcsTerm,
 
         const Iterator = struct {
-            iter: flecs.c.ecs_iter_t,
+            iter: flecs.c.EcsIter,
             index: usize = 0,
 
-            pub fn init(iter: flecs.c.ecs_iter_t) Iterator {
+            pub fn init(iter: flecs.c.EcsIter) Iterator {
                 return .{ .iter = iter };
             }
 
@@ -37,10 +37,10 @@ pub fn Term(comptime T: anytype) type {
         };
 
         const EntityIterator = struct {
-            iter: flecs.c.ecs_iter_t,
+            iter: flecs.c.EcsIter,
             index: usize = 0,
 
-            pub fn init(iter: flecs.c.ecs_iter_t) EntityIterator {
+            pub fn init(iter: flecs.c.EcsIter) EntityIterator {
                 return .{ .iter = iter };
             }
 
@@ -56,12 +56,12 @@ pub fn Term(comptime T: anytype) type {
         };
 
         pub fn init(world: flecs.World) Self {
-            var term = std.mem.zeroInit(flecs.c.ecs_term_t, .{ .id = world.componentId(T) });
+            var term = std.mem.zeroInit(flecs.c.EcsTerm, .{ .id = world.componentId(T) });
             return .{ .world = world, .term = term };
         }
 
         pub fn initWithPair(world: flecs.World, pair: flecs.EntityId) Self {
-            var term = std.mem.zeroInit(flecs.c.ecs_term_t, .{ .id = pair });
+            var term = std.mem.zeroInit(flecs.c.EcsTerm, .{ .id = pair });
             return .{ .world = world, .term = term };
         }
 
@@ -87,8 +87,8 @@ pub fn Term(comptime T: anytype) type {
             }
         };
 
-            pub fn entityIterator(self: *Self) EntityIterator {
-                return EntityIterator.init(flecs.c.ecs_term_iter(self.world.world, &self.term));
-            }
+        pub fn entityIterator(self: *Self) EntityIterator {
+            return EntityIterator.init(flecs.c.ecs_term_iter(self.world.world, &self.term));
+        }
     };
 }

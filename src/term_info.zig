@@ -9,8 +9,8 @@ pub const TermInfo = struct {
     or_term_type: ?type = null,
     obj_type: ?type = null,
     relation_type: ?type = null,
-    inout: flecs.c.ecs_inout_kind_t = flecs.c.EcsInOutDefault,
-    oper: flecs.c.ecs_oper_kind_t = flecs.c.EcsAnd,
+    inout: flecs.c.EcsInOutKind = .ecs_in_out_default,
+    oper: flecs.c.EcsOperKind = .ecs_and,
     mask: u8 = flecs.c.EcsDefaultSet,
     field: ?[]const u8 = null,
 
@@ -50,7 +50,7 @@ pub const TermInfo = struct {
             term_info.or_term_type = fields[1].type;
 
             if (term_info.oper != 0) @compileError("Bad oper in query. Previous modifier already set oper. " ++ @typeName(T));
-            term_info.oper = flecs.c.EcsOr;
+            term_info.oper = .ecs_or;
         }
 
         // Pairs will have an obj_type as well
@@ -81,23 +81,23 @@ pub const TermInfo = struct {
     }
 
     fn validate(comptime self: TermInfo) void {
-        if (self.inout == flecs.c.EcsInOutFilter and self.oper == flecs.c.EcsNot) @compileError("Filter cant be combined with Not");
-        if (self.oper == flecs.c.EcsNot and self.inout != flecs.c.EcsInOutDefault) @compileError("Not cant be combined with any other modifiers");
+        if (self.inout == .ecs_in_out_none and self.oper == .ecs_not) @compileError("Filter cant be combined with Not");
+        if (self.oper == .ecs_not and self.inout != .ecs_in_out_default) @compileError("Not cant be combined with any other modifiers");
     }
 
     pub fn format(comptime value: TermInfo, comptime _: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
         const inout = switch (value.inout) {
-            flecs.c.EcsInOutDefault => "InOutDefault",
-            flecs.c.EcsInOutFilter => "Filter",
-            flecs.c.EcsIn => "In",
-            flecs.c.EcsOut => "Out",
+            .ecs_in_out_default => "InOutDefault",
+            .ecs_in_out_none => "Filter",
+            .ecs_in => "In",
+            .ecs_out => "Out",
             else => unreachable,
         };
         const oper = switch (value.oper) {
-            flecs.c.EcsAnd => "And",
-            flecs.c.EcsOr => "Or",
-            flecs.c.EcsNot => "Not",
-            flecs.c.EcsOptional => "Optional",
+            .ecs_and => "And",
+            .ecs_or => "Or",
+            .ecs_not => "Not",
+            .ecs_optional => "Optional",
             else => unreachable,
         };
         try std.fmt.format(writer, "TermInfo{{ type = {d}, or_type = {d}, inout: {s}, oper: {s}, mask: {d}, obj_type: {any}, relation_type: {any}, field_name: {s} }}", .{ value.term_type, value.or_term_type, inout, oper, value.mask, value.obj_type, value.relation_type, value.field });

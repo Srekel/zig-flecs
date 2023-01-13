@@ -113,7 +113,7 @@ pub fn main() !void {
     //      .query.filter.terms = {
     //          {
     //              .id = ecs_id(Position),
-    //              .inout = EcsInOutFilter
+    //              .inout = .ecs_in_outNone
     //          },
     //          {
     //              .id = ecs_id(Velocity),

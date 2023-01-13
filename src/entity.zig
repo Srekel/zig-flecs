@@ -3,10 +3,10 @@ const flecs = @import("flecs.zig");
 const meta = @import("meta.zig");
 
 pub const Entity = struct {
-    world: *flecs.c.ecs_world_t,
+    world: *flecs.c.EcsWorld,
     id: flecs.EntityId,
 
-    pub fn init(world: *flecs.c.ecs_world_t, id: flecs.EntityId) Entity {
+    pub fn init(world: *flecs.c.EcsWorld, id: flecs.EntityId) Entity {
         return .{
             .world = world,
             .id = id,

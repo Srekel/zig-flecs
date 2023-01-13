@@ -68,7 +68,7 @@ fn NotFrom(comptime T1: type, comptime T2: type) type {
 /// Same thing as `Mark(EcsNothing)`.
 pub fn DontMatch(comptime T: type) type {
     return struct {
-        pub const mask: u8 = flecs.c.EcsNothing;
+        pub const mask: u8 = .ecs_nothing;
         term_type: T,
     };
 }

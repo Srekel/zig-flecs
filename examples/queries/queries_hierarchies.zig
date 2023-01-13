@@ -41,13 +41,13 @@ pub fn main() !void {
     // Create a hierarchical query to compute the global position from the local position and the parent position
     var query_t = std.mem.zeroes(flecs.c.ecs_query_desc_t);
     // Read from entity's Local position
-    query_t.filter.terms[0] = std.mem.zeroInit(flecs.c.ecs_term_t, .{ .id = world.pair(Position, Local), .inout = flecs.c.EcsIn });
+    query_t.filter.terms[0] = std.mem.zeroInit(flecs.c.ecs_term_t, .{ .id = world.pair(Position, Local), .inout = .ecs_in });
     // Write to entity's World position
-    query_t.filter.terms[1] = std.mem.zeroInit(flecs.c.ecs_term_t, .{ .id = world.pair(Position, World), .inout = flecs.c.EcsOut });
+    query_t.filter.terms[1] = std.mem.zeroInit(flecs.c.ecs_term_t, .{ .id = world.pair(Position, World), .inout = .ecs_out });
     // Read from parent's World position
     query_t.filter.terms[2].id = world.pair(Position, World);
-    query_t.filter.terms[2].inout = flecs.c.EcsIn;
-    query_t.filter.terms[2].oper = flecs.c.EcsOptional;
+    query_t.filter.terms[2].inout = .ecs_in;
+    query_t.filter.terms[2].oper = .ecs_optional;
     query_t.filter.terms[2].subj.set.mask = flecs.c.EcsParent | flecs.c.EcsCascade;
 
     const QCallback = struct { local: *const Position, world: *Position, parent: ?*const Position };

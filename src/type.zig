@@ -2,10 +2,10 @@ const std = @import("std");
 const flecs = @import("flecs.zig");
 
 pub const Type = struct {
-    world: *flecs.c.ecs_world_t,
-    type: flecs.c.ecs_type_t,
+    world: *flecs.c.EcsWorld,
+    type: flecs.c.EcsType,
 
-    pub fn init(world: *flecs.c.ecs_world_t, t: flecs.c.ecs_type_t) Type {
+    pub fn init(world: *flecs.c.EcsWorld, t: flecs.c.EcsType) Type {
         return .{ .world = world, .type = t.? };
     }
 

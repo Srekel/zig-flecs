@@ -15,12 +15,12 @@ pub fn Iterator(comptime Components: type) type {
     };
 
     return struct {
-        iter: *flecs.c.ecs_iter_t,
+        iter: *flecs.c.EcsIter,
         inner_iter: ?TableColumns = null,
         index: usize = 0,
-        nextFn: *const fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool,
+        nextFn: *const fn ([*c]flecs.c.EcsIter) callconv(.C) bool,
 
-        pub fn init(iter: *flecs.c.ecs_iter_t, comptime nextFn: fn ([*c]flecs.c.ecs_iter_t) callconv(.C) bool) @This() {
+        pub fn init(iter: *flecs.c.EcsIter, comptime nextFn: fn ([*c]flecs.c.EcsIter) callconv(.C) bool) @This() {
             meta.validateIterator(Components, iter);
             return .{
                 .iter = iter,
@@ -86,7 +86,7 @@ pub fn Iterator(comptime Components: type) type {
             var index: usize = 0;
             inline for (@typeInfo(Components).Struct.fields) |field, i| {
                 // skip filters and EcsNothing masks since they arent returned when we iterate
-                while (self.iter.terms[index].inout == flecs.c.EcsInOutFilter or self.iter.terms[index].subj.set.mask == flecs.c.EcsNothing) : (index += 1) {}
+                while (self.iter.terms[index].inout == .ecs_in_out_none or self.iter.terms[index].src.flags == .ecs_nothing) : (index += 1) {}
 
                 const is_optional = @typeInfo(field.type) == .Optional;
                 const col_type = meta.FinalChild(field.type);

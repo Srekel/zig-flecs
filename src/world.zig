@@ -13,7 +13,7 @@ const SystemParameters = struct {
 };
 
 pub const World = struct {
-    world: *flecs.c.ecs_world_t,
+    world: *flecs.EcsWorld,
 
     pub fn init() World {
         return .{ .world = flecs.c.ecs_init().? };
@@ -43,7 +43,7 @@ pub const World = struct {
         _ = flecs.c.ecs_progress(self.world, delta_time);
     }
 
-    pub fn getTypeStr(self: World, typ: flecs.c.ecs_type_t) [*c]u8 {
+    pub fn getTypeStr(self: World, typ: flecs.c.EcsType) [*c]u8 {
         return flecs.c.ecs_type_str(self.world, typ);
     }
 
@@ -144,11 +144,11 @@ pub const World = struct {
     }
 
     /// this operation will preallocate memory for a type (table) for the specified number of entities
-    pub fn dimType(self: World, ecs_type: flecs.c.ecs_type_t, entity_count: i32) void {
+    pub fn dimType(self: World, ecs_type: flecs.c.EcsType, entity_count: i32) void {
         flecs.c.ecs_dim_type(self.world, ecs_type, entity_count);
     }
 
-    pub fn newSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.ecs_iter_action_t) void {
+    pub fn newSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.EcsIterAction) void {
         var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
         desc.entity.name = name;
         desc.entity.add[0] = @enumToInt(phase);
@@ -158,7 +158,7 @@ pub const World = struct {
         _ = flecs.c.ecs_system_init(self.world, &desc);
     }
 
-    pub fn newRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.ecs_iter_action_t) void {
+    pub fn newRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.EcsIterAction) void {
         var desc = std.mem.zeroes(flecs.c.ecs_system_desc_t);
         desc.entity.name = name;
         desc.entity.add[0] = @enumToInt(phase);

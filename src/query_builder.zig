@@ -3,7 +3,7 @@ const flecs = @import("flecs.zig");
 
 pub const QueryBuilder = struct {
     world: flecs.World,
-    desc: flecs.c.ecs_system_desc_t,
+    desc: flecs.c.EcsSystemDesc,
     terms_count: usize = 0,
 
     pub fn init(world: flecs.World) @This() {
@@ -22,14 +22,14 @@ pub const QueryBuilder = struct {
 
     pub fn withReadonly(self: *@This(), comptime T: type) *@This() {
         self.desc.query.filter.terms[self.terms_count].id = self.world.componentId(T);
-        self.desc.query.filter.terms[self.terms_count].inout = flecs.c.EcsIn;
+        self.desc.query.filter.terms[self.terms_count].inout = .ecs_in;
         self.terms_count += 1;
         return self;
     }
 
     pub fn withWriteonly(self: *@This(), comptime T: type) *@This() {
         self.desc.query.filter.terms[self.terms_count].id = self.world.componentId(T);
-        self.desc.query.filter.terms[self.terms_count].inout = flecs.c.EcsOut;
+        self.desc.query.filter.terms[self.terms_count].inout = .ecs_out;
         self.terms_count += 1;
         return self;
     }
@@ -37,38 +37,38 @@ pub const QueryBuilder = struct {
     /// the term will be used for the query but it is neither read nor written
     pub fn withFilter(self: *@This(), comptime T: type) *@This() {
         self.desc.query.filter.terms[self.terms_count].id = self.world.componentId(T);
-        self.desc.query.filter.terms[self.terms_count].inout = flecs.c.EcsInOutFilter;
+        self.desc.query.filter.terms[self.terms_count].inout = .ecs_in_out_none;
         self.terms_count += 1;
         return self;
     }
 
     pub fn without(self: *@This(), comptime T: type) *@This() {
-        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.ecs_term_t, .{
+        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.EcsTerm, .{
             .id = self.world.componentId(T),
-            .oper = flecs.c.EcsNot,
+            .oper = .ecs_not,
         });
         self.terms_count += 1;
         return self;
     }
 
     pub fn optional(self: *@This(), comptime T: type) *@This() {
-        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.ecs_term_t, .{
+        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.EcsTerm, .{
             .id = self.world.componentId(T),
-            .oper = flecs.c.EcsOptional,
+            .oper = .ecs_optional,
         });
         self.terms_count += 1;
         return self;
     }
 
     pub fn either(self: *@This(), comptime T1: type, comptime T2: type) *@This() {
-        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.ecs_term_t, .{
+        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.EcsTerm, .{
             .id = self.world.componentId(T1),
-            .oper = flecs.c.EcsOr,
+            .oper = .ecs_or,
         });
         self.terms_count += 1;
-        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.ecs_term_t, .{
+        self.desc.query.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.EcsTerm, .{
             .id = self.world.componentId(T2),
-            .oper = flecs.c.EcsOr,
+            .oper = .ecs_or,
         });
         self.terms_count += 1;
         return self;
@@ -77,12 +77,12 @@ pub const QueryBuilder = struct {
     /// the query will need to match `T1 || T2` but it will not return data for either column
     pub fn eitherAsFilter(self: *@This(), comptime T1: type, comptime T2: type) *@This() {
         _ = self.either(T1, T2);
-        self.desc.query.filter.terms[self.terms_count - 1].inout = flecs.c.EcsInOutFilter;
-        self.desc.query.filter.terms[self.terms_count - 2].inout = flecs.c.EcsInOutFilter;
+        self.desc.query.filter.terms[self.terms_count - 1].inout = .ecs_in_out_none;
+        self.desc.query.filter.terms[self.terms_count - 2].inout = .ecs_in_out_none;
         return self;
     }
 
-    pub fn manualTerm(self: *@This()) *flecs.c.ecs_term_t {
+    pub fn manualTerm(self: *@This()) *flecs.c.EcsTerm {
         self.terms_count += 1;
         return &self.desc.query.filter.terms[self.terms_count - 1];
     }
@@ -94,7 +94,7 @@ pub const QueryBuilder = struct {
     }
 
     pub fn singleton(self: *@This(), comptime T: type, entity: flecs.EntityId) *@This() {
-        self.desc.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.ecs_term_t, .{ .id = self.world.componentId(T) });
+        self.desc.filter.terms[self.terms_count] = std.mem.zeroInit(flecs.c.EcsTerm, .{ .id = self.world.componentId(T) });
         self.desc.filter.terms[self.terms_count].subj.entity = entity;
         self.terms_count += 1;
         return self;

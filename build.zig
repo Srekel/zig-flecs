@@ -1,11 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const Builder = std.build.Builder;
 
-pub const LibType = enum(i32) {
-    static,
-    exe_compiled,
-};
+const current_version = "3.1.1";
 
 pub fn build(b: *std.build.Builder) anyerror!void {
     const target = b.standardTargetOptions(.{});
@@ -23,14 +19,8 @@ pub fn build(b: *std.build.Builder) anyerror!void {
         exe.setTarget(target);
         exe.setOutputDir("zig-cache/bin");
 
-        if (!std.mem.eql(u8, name, "generator")) {
-            exe.setBuildMode(b.standardReleaseOptions());
-            examples_step.dependOn(&exe.step);
-            exe.install();
-        }
-
-        // for some reason exe_compiled + debug build results in "illegal instruction 4" on Windows. Investigate at some point.
-        linkArtifact(b, exe, target, if (target.isWindows()) .static else .exe_compiled, "");
+        link(exe, target);
+        exe.addPackage(pkg);
 
         const run_cmd = exe.run();
         const exe_step = b.step(name, b.fmt("run {s}.zig", .{name}));
@@ -43,22 +33,14 @@ pub fn build(b: *std.build.Builder) anyerror!void {
         const exe_step = b.step("update_flecs", b.fmt("updates Flecs.h/c and runs translate-c", .{}));
         exe_step.dependOn(&exe.step);
     }
-
-    const exe_tests = b.addTest("src/tests.zig");
-    exe_tests.setTarget(target);
-    exe_tests.setBuildMode(b.standardReleaseOptions());
-    linkArtifact(b, exe_tests, target, if (target.isWindows()) .static else .exe_compiled, "");
-
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&exe_tests.step);
 }
 
 fn getAllExamples(b: *std.build.Builder, root_directory: []const u8) [][2][]const u8 {
     var list = std.ArrayList([2][]const u8).init(b.allocator);
 
-    var recursor = struct {
+    const recursor = struct {
         fn search(alloc: std.mem.Allocator, directory: []const u8, filelist: *std.ArrayList([2][]const u8)) void {
-            var dir = std.fs.cwd().openDir(directory, .{ .iterate = true }) catch unreachable;
+            var dir = std.fs.cwd().openIterableDir(directory, .{ .access_sub_paths = true }) catch unreachable;
             defer dir.close();
 
             var iter = dir.iterate();
@@ -80,46 +62,25 @@ fn getAllExamples(b: *std.build.Builder, root_directory: []const u8) [][2][]cons
 
     recursor(b.allocator, root_directory, &list);
 
-    return list.toOwnedSlice();
+    return list.toOwnedSlice() catch unreachable;
 }
 
-/// prefix_path is used to add package paths. It should be the the same path used to include this build file
-pub fn linkArtifact(b: *Builder, artifact: *std.build.LibExeObjStep, target: std.zig.CrossTarget, lib_type: LibType, comptime prefix_path: []const u8) void {
-    if (prefix_path.len > 0 and !std.mem.endsWith(u8, prefix_path, "/")) @panic("prefix-path must end with '/' if it is not empty");
+pub const pkg = std.build.Pkg{
+    .name = "flecs",
+    .source = .{ .path = thisDir() ++ "/src/flecs.zig" },
+};
 
-    switch (lib_type) {
-        .static => {
-            const lib = b.addStaticLibrary("flecs", null);
-            lib.setBuildMode(std.builtin.Mode.ReleaseFast);
-            lib.setTarget(target);
-
-            compileFlecs(b, lib, target, prefix_path);
-            lib.install();
-
-            artifact.linkLibrary(lib);
-        },
-        .exe_compiled => {
-            compileFlecs(b, artifact, target, prefix_path);
-        },
-    }
-
-    artifact.addPackagePath("flecs", prefix_path ++ "src/flecs.zig");
-}
-
-fn compileFlecs(b: *Builder, exe: *std.build.LibExeObjStep, target: std.zig.CrossTarget, comptime prefix_path: []const u8) void {
+pub fn link(exe: *std.build.LibExeObjStep, target: std.zig.CrossTarget) void {
     exe.linkLibC();
-    exe.addIncludePath(prefix_path ++ "src/c");
+    exe.addIncludePath(thisDir() ++ "/src/c");
 
-    var buildFlags = std.ArrayList([]const u8).init(b.allocator);
     if (target.isWindows()) {
         exe.linkSystemLibrary("Ws2_32");
-
-        if (exe.build_mode != std.builtin.Mode.Debug) {
-            buildFlags.append("-O2") catch unreachable;
-        } else {
-            buildFlags.append("-g") catch unreachable;
-        }
     }
 
-    exe.addCSourceFile(prefix_path ++ "src/c/flecs.c", buildFlags.items);
+    exe.addCSourceFile(thisDir() ++ "/src/c/flecs.c", &.{""});
+}
+
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

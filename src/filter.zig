@@ -5,15 +5,15 @@ const meta = @import("meta.zig");
 
 pub const Filter = struct {
     world: flecs.World,
-    filter: *flecs.c.ecs_filter_t = undefined,
+    filter: *flecs.c.EcsFilter = undefined,
 
     /// filter iterator that lets you fetch components via get/getOpt
     /// TODO: is this thing necessary? Seems the other iterators are more then capable compared to this thing.
     const FilterIterator = struct {
-        iter: flecs.c.ecs_iter_t,
+        iter: flecs.c.EcsIter,
         index: usize = 0,
 
-        pub fn init(iter: flecs.c.ecs_iter_t) @This() {
+        pub fn init(iter: flecs.c.EcsIter) @This() {
             return .{ .iter = iter };
         }
 
@@ -86,10 +86,10 @@ pub const Filter = struct {
         }
     };
 
-    pub fn init(world: flecs.World, desc: *flecs.c.ecs_filter_desc_t) @This() {
+    pub fn init(world: flecs.World, desc: *flecs.c.EcsFilterDesc) @This() {
         var filter = @This(){
             .world = world,
-            .filter = std.heap.c_allocator.create(flecs.c.ecs_filter_t) catch unreachable,
+            .filter = std.heap.c_allocator.create(flecs.c.EcsFilter) catch unreachable,
         };
         std.debug.assert(flecs.c.ecs_filter_init(world.world, filter.filter, desc) == 0);
         return filter;
@@ -115,7 +115,7 @@ pub const Filter = struct {
     }
 
     // storage for the iterator so it can be passed by reference. Do not in-flight two Filters at once!
-    var temp_iter_storage: flecs.c.ecs_iter_t = undefined;
+    var temp_iter_storage: flecs.c.EcsIter = undefined;
 
     /// gets an iterator that iterates all matched entities from all tables in one iteration. Do not create more than one at a time!
     pub fn iterator(self: *@This(), comptime Components: type) flecs.Iterator(Components) {

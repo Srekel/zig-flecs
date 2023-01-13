@@ -25,18 +25,18 @@ pub fn componentHandle(comptime T: type) *flecs.EntityId {
 }
 
 /// gets the EntityId for T creating it if it doesn't already exist
-pub fn componentId(world: *flecs.c.ecs_world_t, comptime T: type) flecs.EntityId {
+pub fn componentId(world: *flecs.c.EcsWorld, comptime T: type) flecs.EntityId {
     var handle = componentHandle(T);
     if (handle.* < std.math.maxInt(flecs.EntityId)) {
         return handle.*;
     }
 
     if (@sizeOf(T) == 0) {
-        var desc = std.mem.zeroInit(flecs.c.ecs_entity_desc_t, .{ .name = @typeName(T) });
+        var desc = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .name = @typeName(T) });
         handle.* = flecs.c.ecs_entity_init(world, &desc);
     } else {
-        var desc = std.mem.zeroInit(flecs.c.ecs_component_desc_t, .{
-            .entity = std.mem.zeroInit(flecs.c.ecs_entity_desc_t, .{ .name = @typeName(T) }),
+        var desc = std.mem.zeroInit(flecs.c.EcsComponentDesc, .{
+            .entity = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .name = @typeName(T) }),
             .size = @sizeOf(T),
             .alignment = @alignOf(T),
         });
@@ -176,14 +176,14 @@ pub fn FieldsTupleType(comptime T: type) type {
     });
 }
 
-pub fn validateIterator(comptime Components: type, iter: *const flecs.c.ecs_iter_t) void {
+pub fn validateIterator(comptime Components: type, iter: *const flecs.c.EcsIter) void {
     if (@import("builtin").mode == .Debug) {
         var index: usize = 0;
         const component_info = @typeInfo(Components).Struct;
 
         inline for (component_info.fields) |field| {
             // skip filters since they arent returned when we iterate
-            while (iter.terms[index].inout == flecs.c.EcsInOutFilter) : (index += 1) {}
+            while (iter.terms[index].inout == .ecs_in_out_none) : (index += 1) {}
             const is_optional = @typeInfo(field.type) == .Optional;
             const col_type = FinalChild(field.type);
             const type_entity = meta.componentHandle(col_type).*;
@@ -197,12 +197,12 @@ pub fn validateIterator(comptime Components: type, iter: *const flecs.c.ecs_iter
 
             // validate readonly (non-ptr types in the struct) matches up with the inout
             const is_const = isConst(field.type);
-            if (is_const) assert(iter.terms[index].inout == flecs.c.EcsIn);
-            if (iter.terms[index].inout == flecs.c.EcsIn) assert(is_const);
+            if (is_const) assert(iter.terms[index].inout == .ecs_in);
+            if (iter.terms[index].inout == .ecs_in) assert(is_const);
 
             // validate that optionals (?* types in the struct) match up with valid opers
-            if (is_optional) assert(iter.terms[index].oper == flecs.c.EcsOr or iter.terms[index].oper == flecs.c.EcsOptional);
-            if (iter.terms[index].oper == flecs.c.EcsOr or iter.terms[index].oper == flecs.c.EcsOptional) assert(is_optional);
+            if (is_optional) assert(iter.terms[index].oper == .ecs_or or iter.terms[index].oper == .ecs_optional);
+            if (iter.terms[index].oper == .ecs_or or iter.terms[index].oper == .ecs_optional) assert(is_optional);
 
             index += 1;
         }
@@ -241,7 +241,7 @@ pub fn validateOrderByType(comptime Components: type, comptime T: type) void {
         if (@hasDecl(Components, "modifiers")) {
             inline for (Components.modifiers) |inout_tuple| {
                 const ti = TermInfo.init(inout_tuple);
-                if (ti.inout == flecs.c.EcsInOutFilter) {
+                if (ti.inout == .ecs_in_out_none) {
                     if (ti.term_type == T)
                         valid = true;
                 }
@@ -269,8 +269,8 @@ pub fn isConst(comptime T: type) bool {
 }
 
 /// https://github.com/SanderMertens/flecs/tree/master/examples/c/reflection
-fn registerReflectionData(world: *flecs.c.ecs_world_t, comptime T: type, entity: flecs.EntityId) void {
-    var entityDesc = std.mem.zeroInit(flecs.c.ecs_entity_desc_t, .{ .entity = entity });
+fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: flecs.EntityId) void {
+    var entityDesc = std.mem.zeroInit(flecs.c.EcsEntityDesc, .{ .entity = entity });
     var desc = std.mem.zeroInit(flecs.c.ecs_struct_desc_t, .{ .entity = entityDesc });
 
     switch (@typeInfo(T)) {
@@ -357,10 +357,10 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
         desc.terms[i].id = world.componentId(meta.FinalChild(field.type));
 
         if (@typeInfo(field.type) == .Optional)
-            desc.terms[i].oper = flecs.c.EcsOptional;
+            desc.terms[i].oper = .ecs_optional;
 
         if (meta.isConst(field.type))
-            desc.terms[i].inout = flecs.c.EcsIn;
+            desc.terms[i].inout = .ecs_in;
     }
 
     // optionally, apply any additional modifiers if present. Keep track of the term_index in case we have to add Or + Filters or Ands
@@ -372,17 +372,17 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
 
             if (getTermIndex(ti.term_type, ti.field, &desc, component_info.fields)) |term_index| {
                 // Not terms should not be present in the Components struct
-                assert(ti.oper != flecs.c.EcsNot);
+                assert(ti.oper != .ecs_not);
 
                 // if we have a Filter on an existing type ensure we also have an Or. That is the only legit case for having a Filter and also
                 // having the term present in the query. For that case, we will leave both optionals and add the two Or terms.
-                if (ti.inout == flecs.c.EcsInOutFilter) {
-                    assert(ti.oper == flecs.c.EcsOr);
+                if (ti.inout == .ecs_in_out_none) {
+                    assert(ti.oper == .ecs_or);
                     if (ti.or_term_type) |or_term_type| {
                         // ensure the term is optional. If the second Or term is present ensure it is optional as well.
-                        assert(desc.terms[term_index].oper == flecs.c.EcsOptional);
+                        assert(desc.terms[term_index].oper == .ecs_optional);
                         if (getTermIndex(or_term_type, null, &desc, component_info.fields)) |or_term_index| {
-                            assert(desc.terms[or_term_index].oper == flecs.c.EcsOptional);
+                            assert(desc.terms[or_term_index].oper == .ecs_optional);
                         }
 
                         desc.terms[next_term_index].id = world.componentId(ti.term_type);
@@ -396,17 +396,17 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
                         next_term_index += 1;
                     } else unreachable;
                 } else {
-                    if (ti.inout == flecs.c.EcsOut) {
-                        assert(desc.terms[term_index].inout == flecs.c.EcsInOutDefault);
+                    if (ti.inout == .ecs_out) {
+                        assert(desc.terms[term_index].inout == .ecs_in_out_default);
                         desc.terms[term_index].inout = ti.inout;
                     }
 
                     // the only valid oper left is Or since Not terms cant be in Components struct
-                    if (ti.oper == flecs.c.EcsOr) {
-                        assert(desc.terms[term_index].oper == flecs.c.EcsOptional);
+                    if (ti.oper == .ecs_or) {
+                        assert(desc.terms[term_index].oper == .ecs_optional);
 
                         if (getTermIndex(ti.or_term_type.?, null, &desc, component_info.fields)) |or_term_index| {
-                            assert(desc.terms[or_term_index].oper == flecs.c.EcsOptional);
+                            assert(desc.terms[or_term_index].oper == .ecs_optional);
                             desc.terms[or_term_index].oper = ti.oper;
                         } else unreachable;
                         desc.terms[term_index].oper = ti.oper;
@@ -423,16 +423,16 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
                 }
             } else {
                 // the term wasnt found so we must have either a Filter, Not or EcsNothing mask
-                if (ti.inout != flecs.c.EcsInOutFilter and ti.oper != flecs.c.EcsNot and ti.mask != flecs.c.EcsNothing) std.debug.print("invalid inout found! No matching type found in the Components struct. Only Not and Filters are valid for types not in the struct. This should assert/panic but a zig bug lets us only print it.\n", .{});
-                if (ti.inout == flecs.c.EcsInOutFilter) {
+                if (ti.inout != .ecs_in_out_none and ti.oper != .ecs_not and ti.mask != .ecs_nothing) std.debug.print("invalid inout found! No matching type found in the Components struct. Only Not and Filters are valid for types not in the struct. This should assert/panic but a zig bug lets us only print it.\n", .{});
+                if (ti.inout == .ecs_in_out_none) {
                     desc.terms[next_term_index].id = world.componentId(ti.term_type);
                     desc.terms[next_term_index].inout = ti.inout;
                     next_term_index += 1;
-                } else if (ti.oper == flecs.c.EcsNot) {
+                } else if (ti.oper == .ecs_not) {
                     desc.terms[next_term_index].id = world.componentId(ti.term_type);
                     desc.terms[next_term_index].oper = ti.oper;
                     next_term_index += 1;
-                } else if (ti.mask == flecs.c.EcsNothing) {
+                } else if (ti.mask == .ecs_nothing) {
                     desc.terms[next_term_index].id = world.componentId(ti.term_type);
                     desc.terms[next_term_index].inout = ti.inout;
                     desc.terms[next_term_index].subj.set.mask = ti.mask;
@@ -454,7 +454,7 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
 }
 
 /// gets the index into the terms array of this type or null if it isnt found (likely a new filter term)
-pub fn getTermIndex(comptime T: type, field_name: ?[]const u8, filter: *flecs.c.ecs_filter_desc_t, fields: []const std.builtin.Type.StructField) ?usize {
+pub fn getTermIndex(comptime T: type, field_name: ?[]const u8, filter: *flecs.c.EcsFilterDesc, fields: []const std.builtin.Type.StructField) ?usize {
     if (fields.len == 0) return null;
     const comp_id = meta.componentHandle(T).*;
 

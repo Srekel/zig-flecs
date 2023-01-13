@@ -4,9 +4,9 @@ const meta = @import("meta.zig");
 
 pub const Query = struct {
     world: flecs.World,
-    query: *flecs.c.ecs_query_t,
+    query: *flecs.c.EcsQuery,
 
-    pub fn init(world: flecs.World, desc: *flecs.c.ecs_query_desc_t) @This() {
+    pub fn init(world: flecs.World, desc: *flecs.c.EcsQueryDesc) @This() {
         return .{ .world = world, .query = flecs.c.ecs_query_init(world.world, desc).? };
     }
 
@@ -19,7 +19,7 @@ pub const Query = struct {
         return flecs.c.ecs_filter_str(self.world.world, filter);
     }
 
-    pub fn changed(self: *@This(), iter: ?*flecs.c.ecs_iter_t) bool {
+    pub fn changed(self: *@This(), iter: ?*flecs.c.EcsIter) bool {
         if (iter) |it| return flecs.c.ecs_query_changed(self.query, it);
         return flecs.c.ecs_query_changed(self.query, null);
     }
@@ -31,7 +31,7 @@ pub const Query = struct {
     }
 
     // storage for the iterator so it can be passed by reference. Do not in-flight two Queries at once!
-    var temp_iter_storage: flecs.c.ecs_iter_t = undefined;
+    var temp_iter_storage: flecs.c.EcsIter = undefined;
 
     /// gets an iterator that iterates all matched entities from all tables in one iteration. Do not create more than one at a time!
     pub fn iterator(self: *@This(), comptime Components: type) flecs.Iterator(Components) {
