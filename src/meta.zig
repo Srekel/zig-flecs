@@ -18,10 +18,7 @@ pub fn assertMsg(ok: bool, comptime msg: []const u8, args: anytype) void {
 
 /// registered component handle cache. Stores the EntityId for the type.
 pub fn componentHandle(comptime T: type) *flecs.EntityId {
-    _ = T;
-    return &(struct {
-        pub var handle: flecs.EntityId = std.math.maxInt(u64);
-    }.handle);
+    return flecs.ecs_id_handle(T);
 }
 
 /// gets the EntityId for T creating it if it doesn't already exist
