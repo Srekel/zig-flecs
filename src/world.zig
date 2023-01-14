@@ -339,8 +339,7 @@ pub const World = struct {
 
     pub fn getSingletonMut(self: World, comptime T: type) ?*T {
         std.debug.assert(@typeInfo(T) == .Struct);
-        var is_added: bool = undefined;
-        var val = flecs.c.ecs_get_mut_id(self.world, self.componentId(T), self.componentId(T), &is_added);
+        var val = flecs.c.ecs_get_mut_id(self.world, self.componentId(T), self.componentId(T));
         if (val == null) return null;
         return @ptrCast(*T, @alignCast(@alignOf(T), val));
     }
