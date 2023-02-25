@@ -124,7 +124,7 @@ pub const World = struct {
         var desc = std.mem.zeroes(flecs.c.ecs_type_desc_t);
         desc.entity = std.mem.zeroInit(flecs.c.ecs_entity_desc_t, .{ .name = name });
 
-        inline for (Types) |T, i| {
+        inline for (Types, 0..) |T, i| {
             desc.ids[i] = self.componentId(T);
         }
 

@@ -130,7 +130,7 @@ pub fn TableIteratorData(comptime Components: type) type {
     const StructField = std.builtin.Type.StructField;
     var fields: [src_fields.len]StructField = undefined;
 
-    for (src_fields) |field, i| {
+    for (src_fields, 0..) |field, i| {
         const T = FinalChild(field.type);
         fields[i] = .{
             .name = field.name,
@@ -280,7 +280,7 @@ fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: fl
             // tags have no size so ignore them
             if (@sizeOf(T) == 0) return;
 
-            inline for (si.fields) |field, i| {
+            inline for (si.fields, 0..) |field, i| {
                 var member = std.mem.zeroes(flecs.c.EcsMember);
                 member.name = field.name.ptr;
 
@@ -316,7 +316,7 @@ fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: fl
                             // TODO
                             enum_desc.entity = meta.componentHandle(T).*;
 
-                            inline for (@typeInfo(field.type).Enum.fields) |f, index| {
+                            inline for (@typeInfo(field.type).Enum.fields, 0..) |f, index| {
                                 enum_desc.constants[index] = std.mem.zeroInit(flecs.c.ecs_enum_constant_t, .{
                                     .name = f.name.ptr,
                                     .value = @intCast(i32, f.value),
@@ -356,7 +356,7 @@ pub fn generateFilterDesc(world: flecs.World, comptime Components: type) flecs.c
 
     // first, extract what we can from the Components fields
     const component_info = @typeInfo(Components).Struct;
-    inline for (component_info.fields) |field, i| {
+    inline for (component_info.fields, 0..) |field, i| {
         desc.terms[i].id = world.componentId(meta.FinalChild(field.type));
 
         if (@typeInfo(field.type) == .Optional)
@@ -463,7 +463,7 @@ pub fn getTermIndex(comptime T: type, field_name: ?[]const u8, filter: *flecs.c.
 
     // if we have a field_name get the index of it so we can match it up to the term index and double check the type matches
     const named_field_index: ?usize = if (field_name) |fname| blk: {
-        const f_idx = inline for (fields) |field, field_index| {
+        const f_idx = inline for (fields, 0..) |field, field_index| {
             if (std.mem.eql(u8, field.name, fname))
                 break field_index;
         };

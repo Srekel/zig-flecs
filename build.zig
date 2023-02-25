@@ -1,84 +1,64 @@
-const builtin = @import("builtin");
 const std = @import("std");
 
-const current_version = "3.1.1";
+// copied and adjusted from zig-gamedev's build
 
-pub fn build(b: *std.build.Builder) anyerror!void {
-    const target = b.standardTargetOptions(.{});
+pub const Package = struct {
+    flecs: *std.Build.Module,
+    flecs_c_cpp: *std.Build.CompileStep,
 
-    const examples = getAllExamples(b, "examples");
+    pub fn build(
+        b: *std.Build,
+        target: std.zig.CrossTarget,
+        optimize: std.builtin.Mode,
+        _: struct {},
+    ) Package {
+        const flecs = b.createModule(.{
+            .source_file = .{ .path = thisDir() ++ "/src/flecs.zig" },
+            .dependencies = &.{},
+        });
 
-    const examples_step = b.step("all_examples", "build all examples");
-    b.default_step.dependOn(examples_step);
+        const flecs_c_cpp = b.addStaticLibrary(.{
+            .name = "flecs",
+            .target = target,
+            .optimize = optimize,
+        });
+        flecs_c_cpp.linkLibC();
+        flecs_c_cpp.addIncludePath(thisDir() ++ "/src/c/flecs");
+        flecs_c_cpp.addCSourceFile(thisDir() ++ "/src/c/flecs.c", &.{
+            "-fno-sanitize=undefined",
+            "-DFLECS_NO_CPP",
+            if (@import("builtin").mode == .Debug) "-DFLECS_SANITIZE" else "",
+        });
 
-    for (examples) |example| {
-        const name = example[0];
-        const source = example[1];
-
-        var exe = b.addExecutable(name, source);
-        exe.setTarget(target);
-        exe.setOutputDir("zig-cache/bin");
-
-        link(exe, target);
-        exe.addPackage(pkg);
-
-        const run_cmd = exe.run();
-        const exe_step = b.step(name, b.fmt("run {s}.zig", .{name}));
-        exe_step.dependOn(&run_cmd.step);
-    }
-
-    // only mac and linux get the update_flecs command
-    if (!target.isWindows()) {
-        var exe = b.addSystemCommand(&[_][]const u8{ "zsh", ".vscode/update_flecs.sh" });
-        const exe_step = b.step("update_flecs", b.fmt("updates Flecs.h/c and runs translate-c", .{}));
-        exe_step.dependOn(&exe.step);
-    }
-}
-
-fn getAllExamples(b: *std.build.Builder, root_directory: []const u8) [][2][]const u8 {
-    var list = std.ArrayList([2][]const u8).init(b.allocator);
-
-    const recursor = struct {
-        fn search(alloc: std.mem.Allocator, directory: []const u8, filelist: *std.ArrayList([2][]const u8)) void {
-            var dir = std.fs.cwd().openIterableDir(directory, .{ .access_sub_paths = true }) catch unreachable;
-            defer dir.close();
-
-            var iter = dir.iterate();
-            while (iter.next() catch unreachable) |entry| {
-                if (entry.kind == .File) {
-                    if (std.mem.endsWith(u8, entry.name, ".zig")) {
-                        const abs_path = std.fs.path.join(alloc, &[_][]const u8{ directory, entry.name }) catch unreachable;
-                        const name = std.fs.path.basename(abs_path);
-
-                        filelist.append([2][]const u8{ name[0 .. name.len - 4], abs_path }) catch unreachable;
-                    }
-                } else if (entry.kind == .Directory) {
-                    const abs_path = std.fs.path.join(alloc, &[_][]const u8{ directory, entry.name }) catch unreachable;
-                    search(alloc, abs_path, filelist);
-                }
-            }
+        if (flecs_c_cpp.target.isWindows()) {
+            flecs_c_cpp.linkSystemLibraryName("ws2_32");
         }
-    }.search;
 
-    recursor(b.allocator, root_directory, &list);
+        return .{
+            .flecs = flecs,
+            .flecs_c_cpp = flecs_c_cpp,
+        };
+    }
 
-    return list.toOwnedSlice() catch unreachable;
-}
-
-pub const pkg = std.build.Pkg{
-    .name = "flecs",
-    .source = .{ .path = thisDir() ++ "/src/flecs.zig" },
+    pub fn link(flecs_pkg: Package, exe: *std.Build.CompileStep) void {
+        exe.addIncludePath(thisDir() ++ "/src/c");
+        exe.linkLibrary(flecs_pkg.flecs_c_cpp);
+    }
 };
 
-pub fn link(exe: *std.build.LibExeObjStep, target: std.zig.CrossTarget) void {
-    exe.linkLibC();
-    exe.addIncludePath(thisDir() ++ "/src/c");
+pub fn build(_: *std.Build) void {}
 
-    if (target.isWindows()) {
-        exe.linkSystemLibrary("Ws2_32");
-    }
-
-    exe.addCSourceFile(thisDir() ++ "/src/c/flecs.c", &.{ "-g", "-O0" });
+pub fn buildTests(
+    b: *std.Build,
+    optimize: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.Build.CompileStep {
+    const tests = b.addTest(.{
+        .root_source_file = .{ .path = thisDir() ++ "/src/flecs.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    return tests;
 }
 
 inline fn thisDir() []const u8 {

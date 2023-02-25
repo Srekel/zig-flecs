@@ -38,7 +38,7 @@ pub fn TableIterator(comptime Components: type) type {
 
             var iter: InnerIterator = .{ .count = self.iter.count };
             var index: usize = 0;
-            inline for (@typeInfo(Components).Struct.fields) |field, i| {
+            inline for (@typeInfo(Components).Struct.fields, 0..) |field, i| {
                 // skip filters since they arent returned when we iterate
                 while (self.iter.terms[index].inout == .ecs_in_out_none) : (index += 1) {}
 

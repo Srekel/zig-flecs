@@ -84,7 +84,7 @@ pub fn Iterator(comptime Components: type) type {
 
             var iter: TableColumns = .{ .count = self.iter.count };
             var index: usize = 0;
-            inline for (@typeInfo(Components).Struct.fields) |field, i| {
+            inline for (@typeInfo(Components).Struct.fields, 0..) |field, i| {
                 // skip filters and EcsNothing masks since they arent returned when we iterate
                 while (self.iter.terms[index].inout == .ecs_in_out_none or self.iter.terms[index].src.flags == flecs.c.Constants.EcsIsEntity) : (index += 1) {}
 
