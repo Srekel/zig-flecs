@@ -89,7 +89,7 @@ pub const Filter = struct {
     pub fn init(world: flecs.World, desc: *flecs.c.EcsFilterDesc) @This() {
         std.debug.assert(desc.storage == null);
         var filter_storage = std.heap.c_allocator.create(flecs.c.EcsFilter) catch unreachable;
-        std.mem.set(u8, @ptrCast([*]u8, filter_storage)[0..@sizeOf(flecs.c.EcsFilter)], 0);
+        @memset(@ptrCast([*]u8, filter_storage)[0..@sizeOf(flecs.c.EcsFilter)], 0);
 
         filter_storage.hdr.magic = flecs.c.Constants.EcsFilterMagic;
         desc.storage = filter_storage;
