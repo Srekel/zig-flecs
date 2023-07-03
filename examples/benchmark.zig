@@ -64,7 +64,7 @@ fn createEntities(world: *flecs.World) void {
     }
 
     var end = timer.lap();
-    std.debug.print("create {d} entities: \t{d}\n", .{ total_entities, @intToFloat(f64, end) / 1000000000 });
+    std.debug.print("create {d} entities: \t{d}\n", .{ total_entities, @floatFromInt(f64, end) / 1000000000 });
 }
 
 fn iterateEntities(world: flecs.World, times: usize) void {
@@ -74,6 +74,6 @@ fn iterateEntities(world: flecs.World, times: usize) void {
         world.progress(0);
 
         var end = timer.lap();
-        std.debug.print("iterate entities: \t\t{d}\n", .{@intToFloat(f64, end) / 1000000000});
+        std.debug.print("iterate entities: \t\t{d}\n", .{@floatFromInt(f64, end) / 1000000000});
     }
 }

@@ -51,7 +51,7 @@ pub const Filter = struct {
         pub fn getConst(self: @This(), comptime T: type) *const T {
             const index = self.getTermIndex(T);
             const column_index = self.iter.terms[index].index;
-            std.debug.assert(flecs.c.ecs_field_is_readonly(&self.iter, @intCast(i32, index + 1)));
+            std.debug.assert(flecs.c.ecs_field_is_readonly(&self.iter, @intCast(index + 1)));
 
             // const column_index = flecs.c.ecs_iter_find_column(&self.iter, meta.componentHandle(T).*);
             return &utils.column(&self.iter, T, column_index + 1)[self.index - 1];
@@ -61,7 +61,7 @@ pub const Filter = struct {
         pub fn getOpt(self: @This(), comptime T: type) ?*T {
             const index = self.getTermIndex(T);
             const column_index = self.iter.terms[index].index;
-            var skip_term = meta.componentHandle(T).* != flecs.c.ecs_term_id(&self.iter, @intCast(usize, column_index + 1));
+            var skip_term = meta.componentHandle(T).* != flecs.c.ecs_term_id(&self.iter, @intCast(column_index + 1));
             if (skip_term) return null;
 
             if (utils.columnOpt(&self.iter, T, column_index + 1)) |col| {
@@ -73,10 +73,10 @@ pub const Filter = struct {
         /// gets a term that is optional and readonly. Returns null if it isnt found.
         pub fn getConstOpt(self: @This(), comptime T: type) ?*const T {
             const index = self.getTermIndex(T);
-            std.debug.assert(flecs.c.ecs_field_is_readonly(&self.iter, @intCast(i32, index + 1)));
+            std.debug.assert(flecs.c.ecs_field_is_readonly(&self.iter, @as(i32, @intCast(index + 1))));
 
             const column_index = self.iter.terms[index].index;
-            var skip_term = meta.componentHandle(T).* != flecs.c.ecs_term_id(&self.iter, @intCast(usize, column_index + 1));
+            var skip_term = meta.componentHandle(T).* != flecs.c.ecs_term_id(&self.iter, @as(usize, @intCast(column_index + 1)));
             if (skip_term) return null;
 
             if (utils.columnOpt(&self.iter, T, column_index + 1)) |col| {
@@ -89,7 +89,7 @@ pub const Filter = struct {
     pub fn init(world: flecs.World, desc: *flecs.c.EcsFilterDesc) @This() {
         std.debug.assert(desc.storage == null);
         var filter_storage = std.heap.c_allocator.create(flecs.c.EcsFilter) catch unreachable;
-        @memset(@ptrCast([*]u8, filter_storage)[0..@sizeOf(flecs.c.EcsFilter)], 0);
+        @memset(@as([*]u8, @ptrCast(filter_storage))[0..@sizeOf(flecs.c.EcsFilter)], 0);
 
         filter_storage.hdr.magic = flecs.c.Constants.EcsFilterMagic;
         desc.storage = filter_storage;

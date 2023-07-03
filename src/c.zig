@@ -84,6 +84,11 @@ pub const EcsSize = i32;
 
 pub const EcsMixins = opaque {};
 
+// pub const EcsType = extern struct {
+//     array: [*]EcsId,
+//     count: i32,
+// };
+
 pub const EcsTermId = extern struct {
     id: EcsEntity,
     name: [*c]u8,

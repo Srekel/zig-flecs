@@ -319,7 +319,7 @@ fn registerReflectionData(world: *flecs.c.EcsWorld, comptime T: type, entity: fl
                             inline for (@typeInfo(field.type).Enum.fields, 0..) |f, index| {
                                 enum_desc.constants[index] = std.mem.zeroInit(flecs.c.ecs_enum_constant_t, .{
                                     .name = f.name.ptr,
-                                    .value = @intCast(i32, f.value),
+                                    .value = @intCast(f.value),
                                 });
                             }
 

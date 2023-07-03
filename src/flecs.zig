@@ -55,6 +55,7 @@ pub const Event = enum(c.EcsId) {
     on_delete = c.ECS_HI_COMPONENT_ID + 37,
     // Event. Exactly-once trigger for when an entity matches/unmatches a filter
     monitor = c.ECS_HI_COMPONENT_ID + 61,
+    _,
 };
 
 // pub const OperKind = enum(c_int) {
@@ -76,11 +77,11 @@ pub const Event = enum(c.EcsId) {
 // };
 
 pub fn pairFirst(id: EntityId) u32 {
-    return @truncate(u32, (id & c.Constants.ECS_COMPONENT_MASK) >> 32);
+    return @truncate((id & c.Constants.ECS_COMPONENT_MASK) >> 32);
 }
 
 pub fn pairSecond(id: EntityId) u32 {
-    return @truncate(u32, id);
+    return @truncate(id);
 }
 
 /// Returns the base type of the given type, useful for pointers.
@@ -103,12 +104,12 @@ pub fn BaseType(comptime T: type) type {
 
 /// Casts the anyopaque pointer to a const pointer of the given type.
 pub fn ecs_cast(comptime T: type, val: ?*const anyopaque) *const T {
-    return @ptrCast(*const T, @alignCast(@alignOf(T), val));
+    return @ptrCast(@alignCast(val));
 }
 
 /// Casts the anyopaque pointer to a pointer of the given type.
 pub fn ecs_cast_mut(comptime T: type, val: ?*anyopaque) *T {
-    return @ptrCast(*T, @alignCast(@alignOf(T), val));
+    return @ptrCast(@alignCast(val));
 }
 
 /// Returns a pointer to the EcsId of the given type.
@@ -126,12 +127,12 @@ pub fn ecs_id(comptime T: type) c.EcsId {
 
 /// Returns the full id of the first element of the pair.
 pub fn ecs_pair_first(pair: c.EcsId) c.EcsId {
-    return @intCast(c.EcsId, @truncate(u32, (pair & c.Constants.ECS_COMPONENT_MASK) >> 32));
+    return @truncate((pair & c.Constants.ECS_COMPONENT_MASK) >> 32);
 }
 
 /// returns the full id of the second element of the pair.
 pub fn ecs_pair_second(pair: c.EcsId) c.EcsId {
-    return @intCast(c.EcsId, @truncate(u32, pair));
+    return @truncate(pair);
 }
 
 /// Returns an EcsId for the given pair.
@@ -217,10 +218,10 @@ pub fn ecs_new_w_pair(world: *c.EcsWorld, first: anytype, second: anytype) c.Ecs
 pub fn ecs_bulk_new(world: *c.EcsWorld, comptime Component: ?type, count: i32) []const c.EcsEntity {
     if (Component) |T| {
         std.debug.assert(@typeInfo(T) == .Struct or @typeInfo(T) == .Type);
-        return c.ecs_bulk_new_w_id(world, ecs_id(T), count)[0..@intCast(usize, count)];
+        return c.ecs_bulk_new_w_id(world, ecs_id(T), count)[0..@as(usize, count)];
     }
 
-    return c.ecs_bulk_new_w_id(world, 0, count)[0..@intCast(usize, count)];
+    return c.ecs_bulk_new_w_id(world, 0, count)[0..@as(usize, count)];
 }
 
 /// Returns a new entity with the given name.
@@ -420,9 +421,9 @@ pub fn ecs_get_pair_second(world: *c.EcsWorld, entity: c.EcsEntity, first: anyty
 /// Returns an optional slice for the type given the field location.
 /// Use the entity's index from the iterator to access component.
 pub fn ecs_field(it: *c.EcsIter, comptime T: type, index: usize) ?[]T {
-    if (c.ecs_field_w_size(it, @sizeOf(T), @intCast(i32, index))) |ptr| {
-        const c_ptr = @ptrCast([*]T, @alignCast(@alignOf(T), ptr));
-        return c_ptr[0..@intCast(usize, it.count)];
+    if (c.ecs_field_w_size(it, @sizeOf(T), @as(i32, @intCast(index)))) |ptr| {
+        const c_ptr: [*]T = @ptrCast(@alignCast(ptr));
+        return c_ptr[0..@as(usize, @intCast(it.count))];
     }
     return null;
 }

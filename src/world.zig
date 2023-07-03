@@ -77,7 +77,7 @@ pub const World = struct {
         std.debug.assert(obj_info == .Struct or obj_info == .Type or Object == flecs.EntityId or Object == flecs.Entity);
 
         const rel_id = switch (Relation) {
-            c_int => @intCast(flecs.EntityId, relation),
+            c_int => @as(flecs.EntityId, @intCast(relation)),
             type => self.componentId(relation),
             flecs.EntityId => relation,
             flecs.Entity => relation.id,
@@ -91,7 +91,7 @@ pub const World = struct {
             else => unreachable,
         };
 
-        return flecs.c.Constants.ECS_PAIR | (rel_id << @as(u32, 32)) + @truncate(u32, obj_id);
+        return flecs.c.Constants.ECS_PAIR | (rel_id << @as(u32, 32)) + @as(u32, @truncate(obj_id));
     }
 
     /// bulk registers a tuple of Types
@@ -151,7 +151,7 @@ pub const World = struct {
     pub fn newSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.EcsIterAction) void {
         var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
         desc.entity.name = name;
-        desc.entity.add[0] = @enumToInt(phase);
+        desc.entity.add[0] = @intFromEnum(phase);
         desc.query.filter.expr = signature;
         // desc.multi_threaded = true;
         desc.callback = action;
@@ -161,7 +161,7 @@ pub const World = struct {
     pub fn newRunSystem(self: World, name: [*c]const u8, phase: flecs.Phase, signature: [*c]const u8, action: flecs.c.EcsIterAction) void {
         var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
         desc.entity.name = name;
-        desc.entity.add[0] = @enumToInt(phase);
+        desc.entity.add[0] = @intFromEnum(phase);
         desc.query.filter.expr = signature;
         // desc.multi_threaded = true;
         desc.callback = dummyFn;
@@ -174,8 +174,8 @@ pub const World = struct {
 
         edesc.id = 0;
         edesc.name = name;
-        edesc.add[0] = flecs.ecs_pair(flecs.c.Constants.EcsDependsOn, @enumToInt(phase));
-        edesc.add[1] = @enumToInt(phase);
+        edesc.add[0] = flecs.ecs_pair(flecs.c.Constants.EcsDependsOn, @intFromEnum(phase));
+        edesc.add[1] = @intFromEnum(phase);
 
         var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
         desc.entity = flecs.c.ecs_entity_init(self.world, &edesc);
@@ -233,7 +233,7 @@ pub const World = struct {
         var desc = std.mem.zeroes(flecs.c.EcsSystemDesc);
         desc.callback = dummyFn;
         desc.entity.name = Components.name;
-        desc.entity.add[0] = @enumToInt(phase);
+        desc.entity.add[0] = @intFromEnum(phase);
         // desc.multi_threaded = true;
         desc.run = wrapSystemFn(Components, Components.run);
         desc.query.filter = meta.generateFilterDesc(self, Components);
@@ -264,7 +264,7 @@ pub const World = struct {
         desc.ctx = ctx;
         // TODO
         // desc.entity.name = Components.name;
-        desc.events[0] = @enumToInt(event);
+        desc.events[0] = @intFromEnum(event);
 
         desc.run = wrapSystemFn(Components, Components.run);
         desc.filter = meta.generateFilterDesc(self, Components);
@@ -293,7 +293,7 @@ pub const World = struct {
 
     pub fn getMut(self: *World, entity: flecs.EntityId, comptime T: type) *T {
         var ptr = flecs.c.ecs_get_mut_id(self.world, entity.id, meta.componentId(self.world, T));
-        return @ptrCast(*T, @alignCast(@alignOf(T), ptr.?));
+        return @ptrCast(@alignCast(ptr.?));
     }
 
     /// removes a component from an Entity
@@ -334,14 +334,14 @@ pub const World = struct {
         std.debug.assert(@typeInfo(T) == .Struct);
         var val = flecs.c.ecs_get_id(self.world, self.componentId(T), self.componentId(T));
         if (val == null) return null;
-        return @ptrCast(*const T, @alignCast(@alignOf(T), val));
+        return @as(*const T, @ptrCast(@alignCast(val)));
     }
 
     pub fn getSingletonMut(self: World, comptime T: type) ?*T {
         std.debug.assert(@typeInfo(T) == .Struct);
         var val = flecs.c.ecs_get_mut_id(self.world, self.componentId(T), self.componentId(T));
         if (val == null) return null;
-        return @ptrCast(*T, @alignCast(@alignOf(T), val));
+        return @as(*T, @ptrCast(@alignCast(val)));
     }
 
     pub fn removeSingleton(self: World, comptime T: type) void {

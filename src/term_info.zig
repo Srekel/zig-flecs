@@ -25,11 +25,11 @@ pub const TermInfo = struct {
 
             if (@hasDecl(t, "inout")) {
                 if (term_info.inout != 0) @compileError("Bad inout in query. Previous modifier already set inout. " ++ @typeName(T));
-                term_info.inout = @enumToInt(@field(t, "inout"));
+                term_info.inout = @intFromEnum(@field(t, "inout"));
             }
             if (@hasDecl(t, "oper")) {
                 if (term_info.oper != 0) @compileError("Bad oper in query. Previous modifier already set oper. " ++ @typeName(T));
-                term_info.oper = @enumToInt(@field(t, "oper"));
+                term_info.oper = @intFromEnum(@field(t, "oper"));
             }
             if (@hasDecl(t, "mask")) {
                 if (term_info.mask != 0) @compileError("Bad mask in query. Previous modifier already set mask. " ++ @typeName(T));

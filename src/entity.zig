@@ -113,7 +113,7 @@ pub const Entity = struct {
     pub fn getMut(self: Entity, comptime T: type) ?*T {
         var ptr = flecs.c.ecs_get_mut_id(self.world, self.id, meta.componentId(self.world, T));
         if (ptr) |p| {
-            return @ptrCast(*T, @alignCast(@alignOf(T), p));
+            return @ptrCast(@alignCast(p));
         }
         return null;
     }
