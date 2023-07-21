@@ -90,7 +90,7 @@ pub const Entity = struct {
         const T = meta.FinalChild(@TypeOf(ptr_or_struct));
         var component = if (@typeInfo(@TypeOf(ptr_or_struct)) == .Pointer) ptr_or_struct else &ptr_or_struct;
         const id = meta.componentId(self.world, T);
-        flecs.c.ecs_add_id(self.world, self.id, flecs.c.ECS_OVERRIDE | id);
+        flecs.c.ecs_add_id(self.world, self.id, flecs.c.Constants.ECS_OVERRIDE | id);
         _ = flecs.c.ecs_set_id(self.world, self.id, id, @sizeOf(T), component);
     }
 
